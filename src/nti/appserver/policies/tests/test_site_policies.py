@@ -9,6 +9,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from nti.coremetadata.interfaces import IUser
+
 logger = __import__('logging').getLogger(__name__)
 
 #disable: accessing protected members, too many methods
@@ -116,6 +118,7 @@ class IDummyRequest(interface.Interface):
 	Use for registration of our SiteNameGenerator
 	"""
 
+
 class AbstractAdminCreatedUser(ApplicationLayerTest):
 
 	@property
@@ -134,20 +137,35 @@ class AbstractAdminCreatedUser(ApplicationLayerTest):
 
 		return SiteNameGenerator
 
-	def generate_user_created_event(self, user, policy, site_name="NTI"):
-		with _provide_adapter(self.site_name_generator(site_name)):
-			with _provide_utility(policy, ICommunitySitePolicyUserEventListener):
-				request = DummyRequest()
-				interface.alsoProvides(request, IDummyRequest)
+	def user_displayname_generator(self):
+		@component.adapter(IUser, IDummyRequest)
+		@interface.implementer(IDisplayNameGenerator)
+		class UserDisplayNameGenerator(object):
+			def __init__(self, user, *args, **kwargs):
+				self.user = user
 
-				settings = component.getUtility(IApplicationSettings)
-				old_reset_url = settings.get('password_reset_url')
-				settings['password_reset_url'] = '/login/recover/reset'
-				try:
-					# Trigger the process that sends the email
-					notify(self.event_factory(user, request))
-				finally:
-					settings['password_reset_url'] = old_reset_url
+			def __call__(self, *args, **kwargs):
+				return self.user.username
+
+		return UserDisplayNameGenerator
+
+	def generate_user_created_event(self, user, policy, site_name="NTI",
+									environ=None):
+		with _provide_adapter(self.user_displayname_generator()):
+			with _provide_adapter(self.site_name_generator(site_name)):
+				with _provide_utility(policy, ICommunitySitePolicyUserEventListener):
+					request = DummyRequest(environ=environ)
+
+					interface.alsoProvides(request, IDummyRequest)
+
+					settings = component.getUtility(IApplicationSettings)
+					old_reset_url = settings.get('password_reset_url')
+					settings['password_reset_url'] = '/login/recover/reset'
+					try:
+						# Trigger the process that sends the email
+						notify(self.event_factory(user, request))
+					finally:
+						settings['password_reset_url'] = old_reset_url
 
 
 class TestAdminCreatedUser(AbstractAdminCreatedUser):
@@ -170,19 +188,26 @@ class TestAdminCreatedUser(AbstractAdminCreatedUser):
 
 			interface.alsoProvides(user, IRequireSetPassword)
 
-			from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
+			admin_pass = u'temp001'
+			admin_user = self._create_user("user_admin", password=admin_pass)
+
 			policy = GenericSitePolicyEventListener()
-			self.generate_user_created_event(user, policy)
+			auth = ('%s:%s' % (admin_user.username, admin_pass)).encode('base64')
+			environ={
+				'REQUEST_METHOD': 'POST',
+				'HTTP_AUTHORIZATION': 'Basic %s' % (auth,)
+			}
+			self.generate_user_created_event(user, policy, environ=environ)
 
 			assert_that(mailer.queue, has_length(1))
-			msg = decodestring(mailer.queue[0].html)
+			msg = decodestring(mailer.queue[0].body)
 
 			assert_that(msg,
-						contains_string("A new account has been created"))
+						contains_string("user_admin created an account for you"))
 			assert_that(mailer.queue[0].subject,
 						contains_string("Welcome to NTI"))
 
-			match = re.search('href="(http://example.com/login/recover/reset[^"]*)"',
+			match = re.search('Log in at (http://example.com/login/recover/reset[^ ]*)',
 							 msg)
 			assert_that(bool(match), is_(True))
 			query_params = self._query_params(match.group(1))
@@ -193,7 +218,7 @@ class TestAdminCreatedUser(AbstractAdminCreatedUser):
 			del mailer.queue[:]
 
 			policy.NEW_USER_CREATED_BY_ADMIN_EMAIL_SUBJECT = "Your new ${site_name} account"
-			self.generate_user_created_event(user, policy)
+			self.generate_user_created_event(user, policy, environ=environ)
 
 			assert_that(mailer.queue, has_length(1))
 			assert_that(mailer.queue[0].subject,
