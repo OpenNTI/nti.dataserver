@@ -224,9 +224,9 @@ class _TemplateArgs(digest_email._TemplateArgs):
 
     @property
     def snippet(self):
-        if not hasattr(self._primary, "body") \
-                and hasattr(self._primary, "headline") \
-                and hasattr(self._primary.headline, "body"):
+        if      not hasattr(self._primary, "body") \
+            and hasattr(self._primary, "headline") \
+            and hasattr(self._primary.headline, "body"):
             return self.snippet_of(self._primary.headline.body)
 
         return self.snippet_of(self._primary.body)
@@ -293,8 +293,8 @@ def user_mention_emailer(event):
     user = event.target
     change = event.object
     mentionable = IMentionable(change.object, None)
-    if mentionable is not None \
-            and _is_newly_mentioned(user, change):
+    if      mentionable is not None \
+        and _is_newly_mentioned(user, change):
 
         if not _is_subscribed_mentions(user):
             log_mention_notification(user, mentionable, change,
@@ -324,6 +324,7 @@ def user_mention_emailer(event):
         template_args['email_to'] = '%s (%s)' % (email.email, email.id)
         template_args['display_name'] = _display_name(user, request)
         template_args['support_email'] = _support_email()
+        template_args['notable_context'] = notable_context
         template_args['view'] = mentionable
 
         mailer = _mailer()

@@ -204,11 +204,13 @@ class TestSubscribers(ApplicationLayerTest):
 	@mock_dataserver.WithMockDSTrans
 	@fudge.patch("nti.dataserver.activitystream.hasQueryInteraction",
 				 "nti.app.pushnotifications.subscribers._is_user_online",
-				 "nti.app.pushnotifications.subscribers._is_subscribed")
-	def test_mention_email(self, mock_interaction, is_online, is_subscribed):
+				 "nti.app.pushnotifications.subscribers._is_subscribed",
+				 "nti.app.pushnotifications.subscribers.get_top_level_context")
+	def test_mention_email(self, mock_interaction, is_online, is_subscribed, mock_top_context):
 		mock_interaction.is_callable().with_args().returns(True)
 		is_online.is_callable().returns(True)
 		is_subscribed.is_callable().returns(False)
+		mock_top_context.is_callable().returns(u"Course Name")
 
 		community = Community.create_community(self.ds, username=u"test_demo")
 		user = users.User.create_user(self.ds, username=u'jason.madden@nextthought.com')
@@ -265,6 +267,9 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(mailer.queue, has_length(2))
 		assert_that(_decode_message(mailer.queue[1]),
 					contains_string("%s\n\n" % topic.title))
+		
+		assert_that(_decode_message(mailer.queue[1]),
+					contains_string('Course Name'))
 
 		# Sent with body of headline post from headline topic
 
