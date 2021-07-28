@@ -109,7 +109,12 @@ class TestNextThoughtOnlyEmail(AppLayerTest, _BaseMixin):
 	mailer = NextThoughtOnlyMailer
 
 	def test_create_mail_message_to_nextthought(self):
-		self._check('jason.madden@nextthought.com', 'jason.madden@nextthought.com')
+		whitelist = ('jason.madden@nextthought.com',
+					 'ntiqatesting@gmail.com',
+					 'ntiqatesting+111@gmail.com',
+					 'emailusertesting@gmail.com')
+		for email in whitelist:
+			self._check(email, email)
 
 	def test_create_mail_message_to_other(self):
 		self._check('jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com')
