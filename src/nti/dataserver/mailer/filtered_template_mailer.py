@@ -60,7 +60,10 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
         # support IEmailAddressable. We lose
         # VERP, but that's alright
         addr = getattr(IEmailAddressable(addr, addr), 'email', addr)
-        if addr.endswith('@nextthought.com'):
+        if     addr.endswith('@nextthought.com') \
+            or addr in ('emailusertesting@gmail.com',
+                        'jzuech3@gmail.com') \
+            or addr.startswith('ntiqatesting'):
             return addr
 
         realname, addr = parseaddr(addr)
