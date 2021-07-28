@@ -307,7 +307,7 @@
                                                     <tr>
                                                         <td class="content" style="font-family: Open Sans, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif; padding: 40px 48px; padding-top: 20px">
                                                             <p style="margin: 0 0 1em; text-align: center"><a style="color: #3fb3f6; text-decoration: none" href="" tal:attributes="href options/notable/creator_href" tal:content="options/notable/creator">John Doe</a>
-                             mentioned you in <a style="color: #3fb3f6; text-decoration: none" href="" tal:attributes="href options/notable/href">a comment</a>.</p>
+                             mentioned you in <a style="color: #3fb3f6; text-decoration: none" href="" tal:attributes="href options/notable/href" tal:content="options/notable_context">a comment</a>.</p>
                                                             <hr style="border: 0; border-top: 1px solid #eee;">
                                                             <table cellspacing="0" cellpadding="0" style="font-family: Open Sans, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Helvetica, Arial, sans-serif; border-collapse: collapse; width: 100%; margin-bottom: 48px;">
                                                                 <tr>

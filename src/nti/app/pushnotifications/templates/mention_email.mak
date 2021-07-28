@@ -3,7 +3,7 @@ Hi ${display_name}!
 parent_display_name = notable.__parent__.display_name
 provenance_text=('%s / ' % parent_display_name()) if parent_display_name else ""
 %>
-${notable.creator} mentioned you in a discussion.
+${notable.creator} mentioned you in ${notable_context}.
 ${provenance_text}${notable.display_name()}
 % if notable.snippet:
 "${notable.snippet}"
