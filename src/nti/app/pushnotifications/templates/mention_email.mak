@@ -1,12 +1,13 @@
 Hi ${display_name}!
 <%
 parent_display_name = notable.__parent__.display_name
+provenance_text = ''
 if parent_display_name:
     provenance_text = parent_display_name()
-else:
-    container_display_name = notable.container.display_name
-    provenance_text = container_display_name()
-provenance_text = '%s/' % provenance_text
+elif notable.container.display_name:
+    provenance_text = notable.container.display_name()
+if provenance_text:
+    provenance_text = '%s/' % provenance_text
 %>
 ${notable.creator} mentioned you in ${notable_context}.
 ${provenance_text}${notable.display_name()}
