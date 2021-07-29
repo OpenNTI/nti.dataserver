@@ -51,6 +51,8 @@ from nti.dataserver.users import User
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from nti.ntiids.oids import to_external_ntiid_oid
 
 from nti.threadable.interfaces import IThreadable
@@ -242,6 +244,18 @@ class _TemplateArgs(digest_email._TemplateArgs):
     @Lazy
     def __parent__(self):
         return _TemplateArgs((self._primary.__parent__,), self.request)
+    
+    @Lazy
+    def container(self):
+        try:
+            container_id = self._primary.containerId
+        except AttributeError:
+            pass
+        else:
+            container = find_object_with_ntiid(container_id)
+            if container:
+                return _TemplateArgs((container,), self.request)
+        return None
 
     def _app_href(self, obj):
         # Default to the most stable identifier we have. If

@@ -312,6 +312,11 @@
                                                                         <span tal:condition="options/notable/__parent__/display_name">
                                                                             <a style="color: #3fb3f6; text-decoration: none" href="" tal:attributes="href options/notable/__parent__/href" tal:content="options/notable/__parent__/display_name">General Discussion</a> /
                                                                         </span>
+                                                                        <span tal:condition="not:options/notable/__parent__/display_name">
+                                                                            <tal:block tal:condition="options/notable/container/display_name">
+                                                                                <a style="color: #3fb3f6; text-decoration: none" href="" tal:attributes="href options/notable/container/href" tal:content="options/notable/container/display_name">General Discussion</a> /
+                                                                            </tal:block>
+                                                                        </span>
                                                                         <a style="color: #3fb3f6; text-decoration: none" href="" tal:attributes="href options/notable/href" tal:content="options/notable/display_name">Discussion Title</a>
                                                                     </td>
                                                                 </tr>
