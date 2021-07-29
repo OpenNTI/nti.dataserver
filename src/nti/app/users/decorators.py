@@ -34,6 +34,8 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
+from nti.appserver.account_recovery_views import REL_FORGOT_PASSCODE
+
 from nti.coremetadata.interfaces import IDeactivatedUser
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
@@ -156,7 +158,10 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
             if IRequireSetPassword.providedBy(context):
                 link = Link(context, elements=('@@AdminUserUpdate',), rel="AdminUserUpdate")
                 _links.append(link)
-
+            email_param = IUserProfile(context).email
+            link = Link(self.request.route_path(REL_FORGOT_PASSCODE), 
+                        params={'username':context.username, 'email':email_param}, rel=REL_FORGOT_PASSCODE)
+            _links.append(link)
 
 @component.adapter(ICommunity)
 @interface.implementer(IExternalMappingDecorator)

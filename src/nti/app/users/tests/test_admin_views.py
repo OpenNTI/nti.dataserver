@@ -94,6 +94,8 @@ from nti.dataserver.users.utils import is_email_verified
 
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.externalization.representation import to_json_representation
+
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
 from nti.identifiers.utils import get_user_for_external_id
@@ -1029,6 +1031,51 @@ class TestAdminViews(ApplicationLayerTest):
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(2))
+        
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_user_passcode_reset(self):
+        """
+        Validate user passcode reset
+        """
+        test_username = u'test_user_passcode_reset'
+        test_admin_username = u'test_reset_admin'
+        test_email = u'%s@gmail.com' % test_username
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._create_user(test_username)
+            site_admin = self._create_user(test_admin_username)
+            IUserProfile(user).email = test_email
+            catalog = get_entity_catalog()
+            intids = component.getUtility(IIntIds)
+            doc_id = intids.getId(user)
+            catalog.index_doc(doc_id, user)
+            set_user_creation_site(user, 'alpha.dev')
+            set_user_creation_site(site_admin, 'alpha.dev')
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            principal_role_manager = IPrincipalRoleManager(getSite())
+            principal_role_manager.assignRoleToPrincipal(ROLE_SITE_ADMIN.id,
+                                                         test_admin_username)
+
+        admin_environ = self._make_extra_environ(user=test_admin_username)
+        admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        user_environ = self._make_extra_environ(user=test_username)
+        user_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        
+        resolve_url = '/dataserver2/ResolveUser/%s' % test_username
+        def get_user_res():
+            res = self.testapp.get(resolve_url, extra_environ=admin_environ)
+            res = res.json_body
+            return res['Items'][0]
+        res = get_user_res()
+        
+        forgot_passcode_href = self.require_link_href_with_rel(res, 'logon.forgot.passcode')
+        data = {'success': 'http://localhost/place'}
+        
+        self.testapp.post(forgot_passcode_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=user_environ, status=403)
+        self.testapp.post(forgot_passcode_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=admin_environ)
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)
