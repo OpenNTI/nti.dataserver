@@ -62,8 +62,7 @@ from nti.dataserver.users.interfaces import IDoNotValidateProfile
 from nti.dataserver.users.users import User
 
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
-from nti.dataserver.authorization import is_admin
-from nti.dataserver.authorization import is_site_admin
+from nti.dataserver.authorization import is_admin_or_site_admin
 
 #: The link relationship type for a link used to recover a username,
 #: given an email address. Also serves as a route name for that same
@@ -90,13 +89,12 @@ REL_RESET_PASSCODE = 'logon.reset.passcode'
 logger = __import__('logging').getLogger(__name__)
 
 
-def _preflight_email_based_request(request, sent_by_admin=False):
-    """
+def _preflight_email_based_request(request):
+
+    #Check if a site admin sent this request; if so, ignore the 403 warning in the _preflight
+    validate_auth = is_admin_or_site_admin(User.get_user(request.authenticated_userid))
     
-    :keyword bool sent_by_admin: true if this request was triggered by a site admin for a user
-    
-    """
-    if request.authenticated_userid and sent_by_admin is None or False:
+    if request.authenticated_userid and not validate_auth:
         raise_json_error(request,
                          hexc.HTTPForbidden,
                          {
@@ -272,12 +270,8 @@ def forgot_passcode_view(request):
     using those two parameters.
 
     """
-    #Check if a site admin sent this request; if so, ignore the 403 warning in the _preflight
     request_user = User.get_user(request.authenticated_userid)
-    if is_site_admin(request_user) or is_admin(request_user):
-        email_assoc_with_account = _preflight_email_based_request(request, sent_by_admin=True)
-    else:
-        email_assoc_with_account = _preflight_email_based_request(request, sent_by_admin=False)       
+    email_assoc_with_account = _preflight_email_based_request(request)       
 
     username = request.params.get('username') or ''
     username = username.strip()
@@ -312,17 +306,16 @@ def forgot_passcode_view(request):
         # We got one user.
         matching_user = matching_users[0]
         
-        #Make sure this is either a site_admin with permissions over the user, or the user themselves
-        if request_user is not None:
-            if(is_site_admin(request_user)):
-                site_admin_utility = component.getUtility(ISiteAdminUtility)
-                if not (site_admin_utility.can_administer_user(request_user, matching_user)):
-                    raise_json_error(request,
-                         hexc.HTTPForbidden,
-                         {
-                             'message': _(u"Cannot administer this user")
-                         },
-                         None)
+        #Make sure this is a site_admin with permissions over the user
+        if(is_admin_or_site_admin(request_user)):
+            site_admin_utility = component.getUtility(ISiteAdminUtility)
+            if not (site_admin_utility.can_administer_user(request_user, matching_user)):
+                raise_json_error(request,
+                     hexc.HTTPForbidden,
+                     {
+                         'message': _(u"Cannot administer this user")
+                     },
+                     None)
             
         now = datetime.datetime.utcnow()
         delta = datetime.timedelta(hours=RESET_KEY_HOURS)

@@ -94,8 +94,6 @@ from nti.dataserver.users.utils import is_email_verified
 
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.externalization.representation import to_json_representation
-
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
 
 from nti.identifiers.utils import get_user_for_external_id
@@ -1061,6 +1059,8 @@ class TestAdminViews(ApplicationLayerTest):
         admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
         user_environ = self._make_extra_environ(user=test_username)
         user_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        nt_admin_environ = self._make_extra_environ()
+        nt_admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
         
         resolve_url = '/dataserver2/ResolveUser/%s' % test_username
         def get_user_res():
@@ -1071,11 +1071,12 @@ class TestAdminViews(ApplicationLayerTest):
         
         forgot_passcode_href = self.require_link_href_with_rel(res, 'logon.forgot.passcode')
         data = {'success': 'http://localhost/place'}
-        
         self.testapp.post(forgot_passcode_href, data, content_type='application/x-www-form-urlencoded', 
                           extra_environ=user_environ, status=403)
         self.testapp.post(forgot_passcode_href, data, content_type='application/x-www-form-urlencoded', 
                           extra_environ=admin_environ)
+        self.testapp.post(forgot_passcode_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=nt_admin_environ)
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)

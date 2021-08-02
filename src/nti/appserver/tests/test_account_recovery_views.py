@@ -82,13 +82,13 @@ class TestApplicationUsernameRecovery(_RecoveryTestBase):
 	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = self._create_user( )
+			_ = self._create_user(username='testuser@test.com')
 
 		app = TestApp( self.app )
 
 		path = b'/dataserver2/logon.forgot.username'
 		data = ""
-		app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
+		app.post( path, data, extra_environ=self._make_extra_environ(), status=403)
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_no_email( self ):
@@ -245,7 +245,7 @@ class TestApplicationPasswordRecovery(_RecoveryTestBase):
 	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
-			_ = self._create_user( )
+			_ = self._create_user(username = 'testuser@test.com')
 
 		app = TestApp( self.app )
 
