@@ -11,10 +11,6 @@ from __future__ import absolute_import
 import itertools
 import unicodecsv as csv
 
-from datetime import datetime
-
-from io import BytesIO
-
 from pyramid import httpexceptions as hexc
 
 from pyramid.config import not_
@@ -45,13 +41,12 @@ from nti.app.users.utils import get_admins
 from nti.app.users.utils import get_site_admins
 from nti.app.users.utils import intids_of_users_by_site
 
+from nti.app.users.views.view_mixins import UsersCSVExportMixin
 from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
 from nti.common.string import is_true
 
 from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
-
-from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
 from nti.dataserver import authorization as nauth
 
@@ -68,14 +63,7 @@ from nti.dataserver.users.index import IX_DISPLAYNAME
 
 from nti.dataserver.users.index import get_entity_catalog
 
-from nti.dataserver.users.interfaces import IFriendlyNamed
-from nti.dataserver.users.interfaces import IProfileDisplayableSupplementalFields
-
 from nti.dataserver.users import User
-
-from nti.identifiers.utils import get_external_identifiers
-
-from nti.mailer.interfaces import IEmailAddressable
 
 from nti.site.site import get_component_hierarchy_names
 
@@ -177,89 +165,15 @@ class SiteUsersView(AbstractEntityViewMixin):
                context=IUsersFolder,
                accept='text/csv',
                permission=nauth.ACT_READ)
-class SiteUsersCSVView(SiteUsersView):
+class SiteUsersCSVView(SiteUsersView,
+                       UsersCSVExportMixin):
 
-    def _replace_username(self, username):
-        substituter = component.queryUtility(IUsernameSubstitutionPolicy)
-        if substituter is None:
-            return username
-        result = substituter.replace(username) or username
-        return result
-
-    def _get_email(self, user):
-        addr = IEmailAddressable(user, None)
-        return getattr(addr, 'email', '')
-
-    def _format_time(self, t):
-        try:
-            return datetime.fromtimestamp(t).isoformat() if t else u''
-        except ValueError:
-            logger.debug("Cannot parse time '%s'", t)
-            return str(t)
-
-    def _build_user_info(self, user, profile_fields):
-        username = user.username
-        userid = self._replace_username(username)
-        friendly_named = IFriendlyNamed(user)
-        alias = friendly_named.alias
-        email = self._get_email(user)
-        createdTime = self._format_time(getattr(user, 'createdTime', 0))
-        lastLoginTime = self._format_time(getattr(user, 'lastLoginTime', None))
-        realname = friendly_named.realname
-        external_id_map = get_external_identifiers(user)
-
-        result = {
-            'alias': alias,
-            'email': email,
-            'realname': realname,
-            'username': userid,
-            'createdTime': createdTime,
-            'lastLoginTime': lastLoginTime,
-            'external_ids': external_id_map
-        }
-        if profile_fields is not None:
-            result.update(profile_fields.get_user_fields(user))
-        return result
+    def _get_filename(self):
+        return u'users_export.csv'
 
     def __call__(self):
         self.check_access()
-        rs = self._get_result_iter()
-        
-        stream = BytesIO()
-        fieldnames = ['username', 'realname', 'alias', 'email',
-                      'createdTime', 'lastLoginTime']
-        profile_fields = component.queryUtility(IProfileDisplayableSupplementalFields)
-        if profile_fields is not None:
-            fieldnames.extend(profile_fields.get_ordered_fields())
-
-        user_infos = list()
-        external_types = set()
-        for user in rs:
-            user_info = self._build_user_info(user, profile_fields)
-            user_infos.append(user_info)
-            user_ext_types = user_info.get('external_ids')
-            external_types.update(user_ext_types)
-        external_types = sorted(external_types)
-
-        fieldnames.extend(external_types)
-        csv_writer = csv.DictWriter(stream, fieldnames=fieldnames,
-                                    extrasaction='ignore',
-                                    encoding='utf-8')
-        csv_writer.writeheader()
-            
-        for user_info in user_infos:
-            # With CSV, we only return one external_id mapping (common case).
-            external_id_map = user_info.pop('external_ids')
-            for external_type, external_id in external_id_map.items():
-                user_info[external_type] = external_id
-            csv_writer.writerow(user_info)
-
-        response = self.request.response
-        response.body = stream.getvalue()
-        response.content_encoding = 'identity'
-        response.content_type = 'text/csv; charset=UTF-8'
-        response.content_disposition = 'attachment; filename="users_export.csv"'
-        return response
+        return self._create_csv_response()
 
 
 @view_config(name='SiteUsers')
@@ -270,7 +184,8 @@ class SiteUsersCSVView(SiteUsersView):
                renderer='rest',
                permission=nauth.ACT_READ,
                request_param='format=text/csv')
-class SiteUsersCSVPOSTView(SiteUsersCSVView, ModeledContentUploadRequestUtilsMixin):
+class SiteUsersCSVPOSTView(SiteUsersCSVView, 
+                           ModeledContentUploadRequestUtilsMixin):
     
     def readInput(self):
         if self.request.POST:
