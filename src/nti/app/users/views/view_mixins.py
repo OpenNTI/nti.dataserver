@@ -886,7 +886,6 @@ class UsersCSVExportMixin(object):
         return result
 
     def _create_csv_response(self):
-        self.check_access()
         rs = self._get_result_iter()
         
         stream = BytesIO()
