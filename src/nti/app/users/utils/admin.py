@@ -62,13 +62,16 @@ class SiteAdminUtility(object):
         return memberships - {'Everyone'}
 
     def can_administer_user(self, site_admin, user, site_admin_membership_names=None):
+        if is_admin(site_admin):
+            return True
+
+        admin_creation_site = get_user_creation_site(site_admin)
+        if admin_creation_site is None:
+            return False
+
         site_hierarchy = component.getUtility(ISiteAdminManagerUtility)
         user_creation_site_name = get_user_creation_sitename(user)
-        admin_creation_site = get_user_creation_site(site_admin)
-        if admin_creation_site is None and not is_admin(user):
-            return False
-        admin_creation_site_name = admin_creation_site.__name__ \
-            if admin_creation_site is not None else getSite().__name__
+        admin_creation_site_name = admin_creation_site.__name__
         descendant_site_names = site_hierarchy.get_descendant_site_names(admin_creation_site)
         # Can administer if created in this site or any descendant
         result = user_creation_site_name in descendant_site_names \
