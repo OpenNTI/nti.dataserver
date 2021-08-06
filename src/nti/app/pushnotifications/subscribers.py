@@ -329,7 +329,9 @@ def user_mention_emailer(event):
         template_args['notable'] = notable
 
         notable_context = get_top_level_context(mentionable)
-        subject = _(u"%s mentioned you in %s" % (notable.creator, notable_context))
+        subject = _(u"${creator} mentioned you in ${context}",
+                    mapping={'creator': notable.creator,
+                             'context': notable_context})
 
         # TODO: unsubscribe url for mentions
         # template_args['unsubscribe_link'] = generate_unsubscribe_url(request.remote_user, request)

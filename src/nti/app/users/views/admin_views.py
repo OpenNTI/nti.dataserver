@@ -1153,7 +1153,8 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                 'message': _(u'Unable to find community %s.' % community_name)
+                                 'message': _(u'Unable to find community ${communityname}.',
+                                              mapping={'communityname': community_name})
                              },
                              None)
         return community
@@ -1187,7 +1188,8 @@ class AbstractUpdateCommunityView(AbstractAuthenticatedView,
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                 'message': _(u'User %s not found.' % username),
+                                 'message': _(u'User ${username} not found.',
+                                              mapping={'username': username})
                              },
                              None)
         return entity
@@ -1331,11 +1333,12 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
             with current_site(site):
                 community = get_site_community()
         if community is None:
+            message = _(u'No provided community and ${sitename} has no site community. Cannot set user creation site.',
+                        mapping={'sitename', site.__name})
             raise_json_error(self.request,
                              hexc.HTTPUnprocessableEntity,
                              {
-                                 'message': _(u'No provided community and %s has no site community. Cannot set'
-                                              u' user creation site.' % site.__name__)
+                                 'message': message
                              },
                              None)
         return community
