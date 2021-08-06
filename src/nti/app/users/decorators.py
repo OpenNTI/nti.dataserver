@@ -158,9 +158,7 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
             if IRequireSetPassword.providedBy(context):
                 link = Link(context, elements=('@@AdminUserUpdate',), rel="AdminUserUpdate")
                 _links.append(link)
-            email_param = IUserProfile(context).email
-            link = Link(self.request.route_path(REL_FORGOT_PASSCODE), 
-                        params={'username':context.username, 'email':email_param}, rel=REL_FORGOT_PASSCODE)
+            link = Link(context, elements=('@@' + REL_FORGOT_PASSCODE,), rel=REL_FORGOT_PASSCODE)
             _links.append(link)
 
 @component.adapter(ICommunity)

@@ -53,7 +53,6 @@ from nti.appserver.interfaces import IApplicationSettings
 from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users.interfaces import checkEmailAddress
@@ -62,7 +61,6 @@ from nti.dataserver.users.interfaces import IDoNotValidateProfile
 from nti.dataserver.users.users import User
 
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
-from nti.dataserver.authorization import is_admin_or_site_admin
 
 #: The link relationship type for a link used to recover a username,
 #: given an email address. Also serves as a route name for that same
@@ -90,11 +88,8 @@ logger = __import__('logging').getLogger(__name__)
 
 
 def _preflight_email_based_request(request):
-
-    #Check if a site admin sent this request; if so, ignore the 403 warning in the _preflight
-    validate_auth = is_admin_or_site_admin(User.get_user(request.authenticated_userid))
     
-    if request.authenticated_userid and not validate_auth:
+    if request.authenticated_userid:
         raise_json_error(request,
                          hexc.HTTPForbidden,
                          {
@@ -120,7 +115,6 @@ def _preflight_email_based_request(request):
                          },
                          None)
     return email_assoc_with_account
-
 
 def _create_mock_user(user):
     """
@@ -254,7 +248,7 @@ SET_INITIAL_PASS_DAYS = 7
 @view_config(route_name=REL_FORGOT_PASSCODE,
              request_method='POST',
              renderer='rest')
-def forgot_passcode_view(request):
+class ForgotPasscodeView(object):
     """
     Initiate the recovery workflow for a lost/forgotten password by taking
     the email address associated with the account as a POST parameter named 'email'
@@ -270,103 +264,128 @@ def forgot_passcode_view(request):
     using those two parameters.
 
     """
-    request_user = User.get_user(request.authenticated_userid)
-    email_assoc_with_account = _preflight_email_based_request(request)       
-
-    username = request.params.get('username') or ''
-    username = username.strip()
-    if not username:
-        raise_json_error(request,
-                         hexc.HTTPBadRequest,
-                         {
-                             'message': _(u"Must provide username.")
-                         },
-                         None)
-    username = username.lower()  # normalize
-
-    success_redirect_value = request.params.get('success')
-    if not success_redirect_value:
-        raise_json_error(request,
-                         hexc.HTTPBadRequest,
-                         {
-                             'message': _(u"Must provide success.")
-                         },
-                         None)
-
-    matching_users = find_users_with_email(email_assoc_with_account,
-                                           component.getUtility(IDataserver),
-                                           username=username)
-
-    policy = _site_policy()
-    base_template = getattr(policy,
-                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
-                            'password_reset_email')
-    # Ok, we either got one user on no users
-    if matching_users and len(matching_users) == 1:
-        # We got one user.
-        matching_user = matching_users[0]
+    def __init__(self, request):
+        self.request = request
         
-        #Make sure this is a site_admin with permissions over the user
-        if(is_admin_or_site_admin(request_user)):
-            site_admin_utility = component.getUtility(ISiteAdminUtility)
-            if not (site_admin_utility.can_administer_user(request_user, matching_user)):
-                raise_json_error(request,
-                     hexc.HTTPForbidden,
-                     {
-                         'message': _(u"Cannot administer this user")
-                     },
-                     None)
-            
-        now = datetime.datetime.utcnow()
-        delta = datetime.timedelta(hours=RESET_KEY_HOURS)
-        logger.info("Generating password reset token for user (%s) (exp_time=%s)",
-                    matching_user.username,
-                    now + delta)
+    
+    def get_username(self):
+        username = self.request.params.get('username') or ''
+        username = username.strip()
+        if not username:
+            raise_json_error(self.request,
+                             hexc.HTTPBadRequest,
+                             {
+                                 'message': _(u"Must provide username.")
+                             },
+                             None)
+        username = username.lower()  # normalize   
+        return username 
+    
+    def get_success_redirect_value(self):
+        success_redirect_value = self.request.params.get('success')
+        if not success_redirect_value:
+            raise_json_error(self.request,
+                             hexc.HTTPBadRequest,
+                             {
+                                 'message': _(u"Must provide success.")
+                             },
+                             None) 
+        return success_redirect_value 
+    
+    def get_reset_url(self, user, username, user_email):
         recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
-        reset_url = recovery_utility.get_password_reset_url(matching_user, request)
+        reset_url = recovery_utility.get_password_reset_url(user, self.request)
         if not reset_url:
             logger.warn("No recovery url found for username '%s' and email '%s'",
-                        username, email_assoc_with_account)
+                        username, user_email)
             reset_url = None
-        matching_user = _create_mock_user(matching_user)
-        text_ext = ".mak"
-    else:
-        logger.warn("Failed to find user with username '%s' and email '%s': %s",
-                    username, email_assoc_with_account, matching_users)
-        matching_user = None
-        reset_url = None
-        base_template = failed_recovery_spec(base_template)
-        text_ext = ".txt"
+        return reset_url
+    
+    def get_args(self, username, email_assoc_with_account, base_template):
+        matching_users = find_users_with_email(email_assoc_with_account,
+                                               component.getUtility(IDataserver),
+                                               username=username)
+        # Ok, we either got one user on no users
+        if matching_users and len(matching_users) == 1:
+            # We got one user.
+            matching_user = matching_users[0]
+                
+            now = datetime.datetime.utcnow()
+            delta = datetime.timedelta(hours=RESET_KEY_HOURS)
+            logger.info("Generating password reset token for user (%s) (exp_time=%s)",
+                        matching_user.username,
+                        now + delta)
 
-    subject = compute_reset_subject(policy, request)
-
-    package = getattr(policy, 'PACKAGE', None)
-    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-
-    # Substitute username if necessary
-    matching_users = map(lambda user: _create_mock_user(user),
-                         matching_users)
-
-    args = {'users': matching_users,
-            'user': matching_user,
-            'reset_url': reset_url,
-            'email': email_assoc_with_account,
-            'support_email': support_email,
-            'external_reset_url': ''}
-
-    if reset_url and request.application_url not in reset_url:
-        args['external_reset_url'] = reset_url
-
-    queue_simple_html_text_email(base_template,
-                                 subject=_(subject),
-                                 recipients=[email_assoc_with_account],
-                                 template_args=args,
-                                 package=package,
-                                 request=request,
-                                 text_template_extension=text_ext)
-
-    return hexc.HTTPNoContent()
-
+            reset_url = self.get_reset_url(matching_user, username, email_assoc_with_account)
+            matching_user = _create_mock_user(matching_user)
+            text_ext = ".mak"
+        else:
+            logger.warn("Failed to find user with username '%s' and email '%s': %s",
+                        username, email_assoc_with_account, matching_users)
+            matching_user = None
+            reset_url = None
+            base_template = failed_recovery_spec(base_template)
+            text_ext = ".txt" 
+            
+        # Substitute username if necessary
+        matching_users = map(lambda user: _create_mock_user(user),
+                             matching_users)
+            
+        return matching_users, matching_user, reset_url, base_template, text_ext 
+    
+    def queue_email(self, email_recipients, args, package, text_ext, base_template=None, policy=None): 
+        if policy is None:
+            policy = _site_policy()
+        if base_template is None:
+            base_template = getattr(policy,
+                                'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
+                                'password_reset_email')
+    
+        subject = compute_reset_subject(policy, self.request)  
+        
+        queue_simple_html_text_email(base_template,
+                                     subject=_(subject),
+                                     recipients=email_recipients,
+                                     template_args=args,
+                                     package=package,
+                                     request=self.request,
+                                     text_template_extension=text_ext)          
+        
+    def __call__(self):
+        from IPython.terminal.debugger import set_trace;set_trace()
+        email_assoc_with_account = _preflight_email_based_request(self.request)
+        username = self.get_username()
+        self.get_success_redirect_value()   
+        policy = _site_policy()       
+        base_template = getattr(policy,
+                                'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
+                                'password_reset_email')
+                
+        package = getattr(policy, 'PACKAGE', None)
+        support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
+    
+        matching_users, matching_user, reset_url, base_template, text_ext = self.get_args(username=username, 
+                                                                                          email_assoc_with_account=email_assoc_with_account,
+                                                                                          base_template=
+                                                                                          base_template)
+        args = {'users': matching_users,
+                'user': matching_user,
+                'reset_url': reset_url,
+                'email': email_assoc_with_account,
+                'support_email': support_email,
+                'external_reset_url': ''}
+    
+        if reset_url and self.request.application_url not in reset_url:
+            args['external_reset_url'] = reset_url
+    
+        self.queue_email(email_recipients=email_assoc_with_account, 
+                         args=args,
+                         package=package, 
+                         text_ext=text_ext, 
+                         base_template=base_template, 
+                         policy=policy)
+    
+        return hexc.HTTPNoContent()        
 
 def _site_policy():
     return component.getUtility(ISitePolicyUserEventListener)
