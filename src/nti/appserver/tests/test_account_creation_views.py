@@ -23,6 +23,8 @@ does_not = is_not
 
 from nose.tools import assert_raises
 
+from collections import defaultdict
+
 import datetime
 import fudge
 import unittest
@@ -774,6 +776,47 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
             assert_that(schema['alias']['readonly'], is_(True))
             assert_that(schema['realname']['readonly'], is_(True))
 
+    @WithSharedApplicationMockDS()
+    def test_default_app_groupings(self):
+        expected = [
+            ('about', 'About', ['about', 'alias', 'realname', 'email',
+                                'location', 'home_page', 'facebook',
+                                'twitter', 'linkedIn', 'instagram']),
+            ('education', 'Education', ['education']),
+            ('professional', 'Professional', ['professional']),
+            ('interests', 'Interests', ['interests'])
+        ]
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._create_user()
+            schema = _AccountProfileSchemafier(user).make_schema()
+
+            group_fields = defaultdict(list)
+            group_details = {}
+            for fn, fschema in schema.iteritems():
+                try:
+                    name = fschema['application_info']['nti.dataserver.user_profile.group_name']
+                except KeyError:
+                    continue
+                
+                title = fschema['application_info']['nti.dataserver.user_profile.group_title']
+                order = fschema['application_info']['nti.dataserver.user_profile.group_order']
+
+                group_fields[name].append((fn, fschema['order']))
+                group_details[name] = (title, order)
+
+        # If we sort our group by order (asc) they should line up with our expected groups
+        sorted_group_names = sorted(group_fields.keys(), key=lambda x:group_details[x][1])
+        assert_that(sorted_group_names, is_([x[0] for x in expected]))
+
+        # Each group should have exactly the fields expected, in sorted order
+        for group, expected_group in zip(sorted_group_names, expected):
+            name, title, fields = expected_group
+
+            assert_that(group, is_(name))
+            assert_that(group_details[group][0], is_(title))
+            
+            sorted_fields = [x[0] for x in sorted(group_fields[group], key=lambda x:x[1])]
+            assert_that(sorted_fields, is_(fields))
 
 def main(email=None, uname=None, cname=None):
     """
