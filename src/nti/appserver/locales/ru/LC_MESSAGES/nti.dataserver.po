@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-08-06 13:55-0500\n"
+"POT-Creation-Date: 2021-08-06 14:17-0500\n"
 "PO-Revision-Date: 2014-03-25 10:13-0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ru\n"
@@ -199,7 +199,7 @@ msgid "Intid not found."
 msgstr ""
 
 #: src/nti/app/pushnotifications/subscribers.py:332
-msgid "${creator} mentioned you in {context}"
+msgid "${creator} mentioned you in ${context}"
 msgstr ""
 
 #: src/nti/app/pushnotifications/views.py:53
@@ -954,5 +954,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "The value you have used is not valid."
+#~ msgstr ""
+
+#~ msgid "${creator} mentioned you in {context}"
 #~ msgstr ""
 

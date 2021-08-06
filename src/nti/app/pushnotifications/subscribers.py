@@ -329,7 +329,7 @@ def user_mention_emailer(event):
         template_args['notable'] = notable
 
         notable_context = get_top_level_context(mentionable)
-        subject = _(u"${creator} mentioned you in {context}",
+        subject = _(u"${creator} mentioned you in ${context}",
                     mapping={'creator': notable.creator,
                              'context': notable_context})
 

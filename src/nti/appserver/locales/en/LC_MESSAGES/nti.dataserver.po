@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2021-08-06 13:55-0500\n"
+"POT-Creation-Date: 2021-08-06 14:17-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language: en\n"
@@ -43,9 +43,9 @@ msgstr ""
 msgid "Could not find multipart data."
 msgstr ""
 
+# | msgid "Please provide a valid ${field}."
 #: src/nti/app/contentfile/views.py:103
 #, fuzzy
-#| msgid "Please provide a valid ${field}."
 msgid "Must provide a valid context id."
 msgstr "Please provide your first and last names."
 
@@ -201,7 +201,7 @@ msgid "Intid not found."
 msgstr ""
 
 #: src/nti/app/pushnotifications/subscribers.py:332
-msgid "${creator} mentioned you in {context}"
+msgid "${creator} mentioned you in ${context}"
 msgstr ""
 
 #: src/nti/app/pushnotifications/views.py:53
@@ -472,9 +472,9 @@ msgstr ""
 msgid "Cannot remove access to object."
 msgstr ""
 
+# | msgid "Please provide your last name."
 #: src/nti/app/users/views/view_mixins.py:536
 #, fuzzy
-#| msgid "Please provide your last name."
 msgid "Must provide real_name."
 msgstr "Please provide your first and last names."
 
@@ -512,16 +512,16 @@ msgstr ""
 msgid "Cannot look for forgotten accounts while logged on."
 msgstr ""
 
+# | msgid "Please provide a valid ${field}."
 #: src/nti/appserver/account_recovery_views.py:112
 #, fuzzy
-#| msgid "Please provide a valid ${field}."
 msgid "Must provide valid email."
 msgstr "Please provide your first and last names."
 
+# | msgid "Please provide your last name."
 #: src/nti/appserver/account_recovery_views.py:276
 #: src/nti/appserver/account_recovery_views.py:517
 #, fuzzy
-#| msgid "Please provide your last name."
 msgid "Must provide username."
 msgstr "Please provide your first and last names."
 
@@ -891,5 +891,8 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "The value you have used is not valid."
+#~ msgstr ""
+
+#~ msgid "${creator} mentioned you in {context}"
 #~ msgstr ""
 
