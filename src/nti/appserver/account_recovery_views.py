@@ -128,7 +128,7 @@ def _preflight_email_based_request(request):
                          None)
     return email_assoc_with_account
 
-def check_success_redirect_value(request):
+def _check_success_redirect_value(request):
     success_redirect_value = request.params.get('success')
     if not success_redirect_value:
         raise_json_error(request,
@@ -138,7 +138,7 @@ def check_success_redirect_value(request):
                          },
                          None)
 
-def get_username(request):
+def _get_username(request):
     username = request.params.get('username') or ''
     username = username.strip()
     if not username:
@@ -151,7 +151,7 @@ def get_username(request):
     username = username.lower()  # normalize   
     return username
     
-def get_reset_url(user, username, user_email, request):
+def _get_reset_url(user, username, user_email, request):
     recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
     reset_url = recovery_utility.get_password_reset_url(user, request)
     if not reset_url:
@@ -160,7 +160,7 @@ def get_reset_url(user, username, user_email, request):
         reset_url = None
     return reset_url 
 
-def queue_email(email_recipients, args, package, text_ext, request, base_template=None, policy=None): 
+def _queue_email(email_recipients, args, package, text_ext, request, base_template=None, policy=None): 
     if policy is None:
         policy = _site_policy()
     if base_template is None:
@@ -328,7 +328,7 @@ def ForgotPasscodeView(request):
     """           
         
     email_assoc_with_account = _preflight_email_based_request(request)
-    username = get_username(request)
+    username = _get_username(request)
     policy = _site_policy()       
     base_template = getattr(policy,
                             'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
@@ -336,7 +336,7 @@ def ForgotPasscodeView(request):
             
     package = getattr(policy, 'PACKAGE', None)
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-    check_success_redirect_value(request)
+    _check_success_redirect_value(request)
     
     matching_users = find_users_with_email(email_assoc_with_account,
                                                component.getUtility(IDataserver),
@@ -352,7 +352,7 @@ def ForgotPasscodeView(request):
                     matching_user.username,
                     now + delta)
 
-        reset_url = get_reset_url(matching_user, username, email_assoc_with_account, request)
+        reset_url = _get_reset_url(matching_user, username, email_assoc_with_account, request)
         matching_user = _create_mock_user(matching_user)
         text_ext = ".mak"
     else:
@@ -377,7 +377,7 @@ def ForgotPasscodeView(request):
     if reset_url and request.application_url not in reset_url:
         args['external_reset_url'] = reset_url
 
-    queue_email(email_recipients=email_assoc_with_account, 
+    _queue_email(email_recipients=email_assoc_with_account, 
                      args=args,
                      package=package, 
                      text_ext=text_ext,
@@ -394,10 +394,10 @@ def ForgotPasscodeView(request):
              context=IUser)
 def AdminTriggeredUserPasswordReset(request):
    
-    request_sender = User.get_user(request.authenticated_userid)
+    remote_user = User.get_user(request.authenticated_userid)
     
     # Make sure this is a site or NT_admin, not a regular user
-    if not is_admin_or_site_admin(request_sender):
+    if not is_admin_or_site_admin(remote_user):
         raise_json_error(request,
                      hexc.HTTPForbidden,
                      {
@@ -408,7 +408,7 @@ def AdminTriggeredUserPasswordReset(request):
     site_admin_utility = component.getUtility(ISiteAdminUtility)
     
     # Check that the admin has permissions over this user
-    if not site_admin_utility.can_administer_user(request_sender, request.context):
+    if not site_admin_utility.can_administer_user(remote_user, request.context):
             raise_json_error(request,
                  hexc.HTTPForbidden,
                  {
@@ -419,13 +419,11 @@ def AdminTriggeredUserPasswordReset(request):
     user_email = IUserProfile(request.context).email
     username = request.context.username
     
-    check_success_redirect_value(request)
-    reset_url = get_reset_url(request.context, username, user_email, request)
+    _check_success_redirect_value(request)
+    reset_url = _get_reset_url(request.context, username, user_email, request)
 
     policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = getattr(policy,
-                            'ADMIN_TRIGGERED_USER_PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
-                            'admin_triggered_user_password_reset')
+    base_template = 'admin_triggered_user_password_reset_email'
     
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
     
@@ -442,7 +440,7 @@ def AdminTriggeredUserPasswordReset(request):
     if reset_url and request.application_url not in reset_url:
         args['external_reset_url'] = reset_url
 
-    queue_email(email_recipients=user_email, 
+    _queue_email(email_recipients=user_email, 
                      args=args, 
                      package=package, 
                      text_ext=".mak",

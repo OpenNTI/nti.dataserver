@@ -88,9 +88,6 @@ class ISitePolicyUserEventListener(interface.Interface):
     NEW_USER_CREATED_BCC = TextLine(title=u'The bcc address for new user emails.',
                                     default=None,
                                     required=False)
-    
-    ADMIN_TRIGGERED_USER_PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for password reset emails.',
-                                                               default='admin_triggered_user_password_reset_email')
 
     PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = NativeStringLine(title=u'The base template for password reset emails.',
                                                                default='password_reset_email')
