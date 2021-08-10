@@ -74,11 +74,6 @@ from nti.app.users.views.view_mixins import AbstractEntityViewMixin
 
 from nti.appserver.interfaces import INamedLinkView
 
-from nti.appserver.account_recovery_views import ForgotPasscodeView
-from nti.appserver.account_recovery_views import REL_FORGOT_PASSCODE
-
-from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
-
 from nti.common.string import is_true
 
 from nti.coremetadata.interfaces import IDeactivatedUser
@@ -89,7 +84,8 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
-from nti.dataserver.interfaces import IUser, ISiteAdminUtility
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsersFolder
@@ -129,7 +125,8 @@ from nti.site.hostpolicy import get_host_site
 from nti.site.hostpolicy import get_all_host_sites
 
 from nti.zodb.containers import bit64_int_to_time
-from nti.dataserver.authorization import is_site_admin, is_admin, is_admin_or_site_admin
+from nti.dataserver.authorization import is_site_admin
+from nti.dataserver.authorization import is_admin
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL
@@ -1376,79 +1373,3 @@ class SetUserCreationSiteInSite(SetUserCreationSiteView):
         # Splat out the defaultdict so the response doesn't include "Class": "defaultdict"
         result = LocatedExternalDict(**updated_users)
         return result
-    
-@view_config(route_name='objects.generic.traversal',
-             name=REL_FORGOT_PASSCODE,
-             request_method='POST',
-             renderer='rest',
-             context=IUser)
-class ForgotPasscodeViewAdminTriggered(AbstractAuthenticatedView, ForgotPasscodeView):
-
-    def get_username(self):
-        username = self.context.username
-        if not username:
-            raise_json_error(self.request,
-                             hexc.HTTPBadRequest,
-                             {
-                                 'message': _(u"Must provide username.")
-                             },
-                             None)
-        username = username.lower()  # normalize
-        return username
-    
-    def __call__(self):
-        request_sender = self.getRemoteUser()
-        
-        #Make sure this is a site or NT_admin with permissions over the user
-        if(is_admin_or_site_admin(request_sender)):
-            site_admin_utility = component.getUtility(ISiteAdminUtility)
-            if not (site_admin_utility.can_administer_user(request_sender, self.context)):
-                raise_json_error(self.request,
-                     hexc.HTTPForbidden,
-                     {
-                         'message': _(u"Cannot administer this user.")
-                     },
-                     None)
-        #Not a site or NT admin at all, so this action should be forbidden        
-        else:
-            raise_json_error(self.request,
-                         hexc.HTTPForbidden,
-                         {
-                             'message': _(u"Cannot reset the password of other users.")
-                         },
-                         None)
-                
-        user_email = IUserProfile(self.context).email
-        username = self.get_username()
-        
-        self.get_success_redirect_value()
-        reset_url = self.get_reset_url(self.context, username, user_email)
-    
-        policy = component.getUtility(ISitePolicyUserEventListener)
-        base_template = getattr(policy,
-                                'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
-                                'password_reset_email')
-        
-        support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-        
-        package = getattr(policy, 'PACKAGE', None)
-
-    
-        args = {'users': self.context,
-                'user': self.context,
-                'reset_url': reset_url,
-                'email': user_email,
-                'support_email': support_email,
-                'external_reset_url': ''}
-    
-        if reset_url and self.request.application_url not in reset_url:
-            args['external_reset_url'] = reset_url
-    
-        self.queue_email(email_recipients=user_email, 
-                         args=args, 
-                         package=package, 
-                         text_ext=".mak", 
-                         base_template=base_template, 
-                         policy=policy)
-        
-        return hexc.HTTPNoContent()

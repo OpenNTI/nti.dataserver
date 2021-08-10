@@ -37,6 +37,8 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.app.authentication import IAuthenticationValidator
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.internalization import update_object_from_external_object
@@ -52,11 +54,15 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import ISiteAdminUtility
 
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import IDoNotValidateProfile
+from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.dataserver.users.users import User
 
@@ -83,6 +89,12 @@ REL_FORGOT_PASSCODE = "logon.forgot.passcode"
 #: given a link with this rel at logon ping
 #: and handshake time.
 REL_RESET_PASSCODE = 'logon.reset.passcode'
+
+#: The link relationship type for a link used by and admin to trigger a
+#: reset of a user's password. The user must be administrable by this admin,
+#: be it a site or NT admin. Sends the password reset email to a the selected
+#: user.
+REL_ADMIN_TRIGGERED_PASSCODE_RESET = 'admin.user_password_reset.request'
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -115,6 +127,56 @@ def _preflight_email_based_request(request):
                          },
                          None)
     return email_assoc_with_account
+
+def check_success_redirect_value(request):
+    success_redirect_value = request.params.get('success')
+    if not success_redirect_value:
+        raise_json_error(request,
+                         hexc.HTTPBadRequest,
+                         {
+                             'message': _(u"Must provide success.")
+                         },
+                         None)
+
+def get_username(request):
+    username = request.params.get('username') or ''
+    username = username.strip()
+    if not username:
+        raise_json_error(request,
+                         hexc.HTTPBadRequest,
+                         {
+                             'message': _(u"Must provide username.")
+                         },
+                         None)
+    username = username.lower()  # normalize   
+    return username
+    
+def get_reset_url(user, username, user_email, request):
+    recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
+    reset_url = recovery_utility.get_password_reset_url(user, request)
+    if not reset_url:
+        logger.warn("No recovery url found for username '%s' and email '%s'",
+                    username, user_email)
+        reset_url = None
+    return reset_url 
+
+def queue_email(email_recipients, args, package, text_ext, request, base_template=None, policy=None): 
+    if policy is None:
+        policy = _site_policy()
+    if base_template is None:
+        base_template = getattr(policy,
+                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
+                            'password_reset_email')
+
+    subject = compute_reset_subject(policy, request)  
+    
+    queue_simple_html_text_email(base_template,
+                                 subject=_(subject),
+                                 recipients=email_recipients,
+                                 template_args=args,
+                                 package=package,
+                                 request=request,
+                                 text_template_extension=text_ext)
 
 def _create_mock_user(user):
     """
@@ -248,7 +310,7 @@ SET_INITIAL_PASS_DAYS = 7
 @view_config(route_name=REL_FORGOT_PASSCODE,
              request_method='POST',
              renderer='rest')
-class ForgotPasscodeView(object):
+def ForgotPasscodeView(request):
     """
     Initiate the recovery workflow for a lost/forgotten password by taking
     the email address associated with the account as a POST parameter named 'email'
@@ -263,129 +325,132 @@ class ForgotPasscodeView(object):
     'username' and 'id' and which can then interact with the server's :func:`reset_passcode_view`
     using those two parameters.
 
-    """
-    def __init__(self, request):
-        self.request = request
+    """           
         
+    email_assoc_with_account = _preflight_email_based_request(request)
+    username = get_username(request)
+    policy = _site_policy()       
+    base_template = getattr(policy,
+                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
+                            'password_reset_email')
+            
+    package = getattr(policy, 'PACKAGE', None)
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
+    check_success_redirect_value(request)
     
-    def get_username(self):
-        username = self.request.params.get('username') or ''
-        username = username.strip()
-        if not username:
-            raise_json_error(self.request,
-                             hexc.HTTPBadRequest,
-                             {
-                                 'message': _(u"Must provide username.")
-                             },
-                             None)
-        username = username.lower()  # normalize   
-        return username 
-    
-    def get_success_redirect_value(self):
-        success_redirect_value = self.request.params.get('success')
-        if not success_redirect_value:
-            raise_json_error(self.request,
-                             hexc.HTTPBadRequest,
-                             {
-                                 'message': _(u"Must provide success.")
-                             },
-                             None) 
-        return success_redirect_value 
-    
-    def get_reset_url(self, user, username, user_email):
-        recovery_utility = component.getUtility(IUserAccountRecoveryUtility)
-        reset_url = recovery_utility.get_password_reset_url(user, self.request)
-        if not reset_url:
-            logger.warn("No recovery url found for username '%s' and email '%s'",
-                        username, user_email)
-            reset_url = None
-        return reset_url
-    
-    def get_args(self, username, email_assoc_with_account, base_template):
-        matching_users = find_users_with_email(email_assoc_with_account,
+    matching_users = find_users_with_email(email_assoc_with_account,
                                                component.getUtility(IDataserver),
                                                username=username)
-        # Ok, we either got one user on no users
-        if matching_users and len(matching_users) == 1:
-            # We got one user.
-            matching_user = matching_users[0]
-                
-            now = datetime.datetime.utcnow()
-            delta = datetime.timedelta(hours=RESET_KEY_HOURS)
-            logger.info("Generating password reset token for user (%s) (exp_time=%s)",
-                        matching_user.username,
-                        now + delta)
+    # Ok, we either got one user on no users
+    if matching_users and len(matching_users) == 1:
+        # We got one user.
+        matching_user = matching_users[0]
+            
+        now = datetime.datetime.utcnow()
+        delta = datetime.timedelta(hours=RESET_KEY_HOURS)
+        logger.info("Generating password reset token for user (%s) (exp_time=%s)",
+                    matching_user.username,
+                    now + delta)
 
-            reset_url = self.get_reset_url(matching_user, username, email_assoc_with_account)
-            matching_user = _create_mock_user(matching_user)
-            text_ext = ".mak"
-        else:
-            logger.warn("Failed to find user with username '%s' and email '%s': %s",
-                        username, email_assoc_with_account, matching_users)
-            matching_user = None
-            reset_url = None
-            base_template = failed_recovery_spec(base_template)
-            text_ext = ".txt" 
-            
-        # Substitute username if necessary
-        matching_users = map(lambda user: _create_mock_user(user),
-                             matching_users)
-            
-        return matching_users, matching_user, reset_url, base_template, text_ext 
-    
-    def queue_email(self, email_recipients, args, package, text_ext, base_template=None, policy=None): 
-        if policy is None:
-            policy = _site_policy()
-        if base_template is None:
-            base_template = getattr(policy,
-                                'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
-                                'password_reset_email')
-    
-        subject = compute_reset_subject(policy, self.request)  
+        reset_url = get_reset_url(matching_user, username, email_assoc_with_account, request)
+        matching_user = _create_mock_user(matching_user)
+        text_ext = ".mak"
+    else:
+        logger.warn("Failed to find user with username '%s' and email '%s': %s",
+                    username, email_assoc_with_account, matching_users)
+        matching_user = None
+        reset_url = None
+        base_template = failed_recovery_spec(base_template)
+        text_ext = ".txt" 
         
-        queue_simple_html_text_email(base_template,
-                                     subject=_(subject),
-                                     recipients=email_recipients,
-                                     template_args=args,
-                                     package=package,
-                                     request=self.request,
-                                     text_template_extension=text_ext)          
+    # Substitute username if necessary
+    matching_users = map(lambda user: _create_mock_user(user),
+                         matching_users)
+
+    args = {'users': matching_users,
+            'user': matching_user,
+            'reset_url': reset_url,
+            'email': email_assoc_with_account,
+            'support_email': support_email,
+            'external_reset_url': ''}
+
+    if reset_url and request.application_url not in reset_url:
+        args['external_reset_url'] = reset_url
+
+    queue_email(email_recipients=email_assoc_with_account, 
+                     args=args,
+                     package=package, 
+                     text_ext=text_ext,
+                     request=request, 
+                     base_template=base_template, 
+                     policy=policy)
+
+    return hexc.HTTPNoContent()
+    
+@view_config(route_name='objects.generic.traversal',
+             name=REL_ADMIN_TRIGGERED_PASSCODE_RESET,
+             request_method='POST',
+             renderer='rest',
+             context=IUser)
+def AdminTriggeredUserPasswordReset(request):
+   
+    request_sender = User.get_user(request.authenticated_userid)
+    
+    # Make sure this is a site or NT_admin, not a regular user
+    if not is_admin_or_site_admin(request_sender):
+        raise_json_error(request,
+                     hexc.HTTPForbidden,
+                     {
+                         'message': _(u"Cannot reset the password of other users.")
+                     },
+                     None)
         
-    def __call__(self):
-        from IPython.terminal.debugger import set_trace;set_trace()
-        email_assoc_with_account = _preflight_email_based_request(self.request)
-        username = self.get_username()
-        self.get_success_redirect_value()   
-        policy = _site_policy()       
-        base_template = getattr(policy,
-                                'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
-                                'password_reset_email')
-                
-        package = getattr(policy, 'PACKAGE', None)
-        support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
+    site_admin_utility = component.getUtility(ISiteAdminUtility)
     
-        matching_users, matching_user, reset_url, base_template, text_ext = self.get_args(username=username, 
-                                                                                          email_assoc_with_account=email_assoc_with_account,
-                                                                                          base_template=
-                                                                                          base_template)
-        args = {'users': matching_users,
-                'user': matching_user,
-                'reset_url': reset_url,
-                'email': email_assoc_with_account,
-                'support_email': support_email,
-                'external_reset_url': ''}
+    # Check that the admin has permissions over this user
+    if not site_admin_utility.can_administer_user(request_sender, request.context):
+            raise_json_error(request,
+                 hexc.HTTPForbidden,
+                 {
+                     'message': _(u"Cannot administer this user.")
+                 },
+                 None)        
+            
+    user_email = IUserProfile(request.context).email
+    username = request.context.username
     
-        if reset_url and self.request.application_url not in reset_url:
-            args['external_reset_url'] = reset_url
+    check_success_redirect_value(request)
+    reset_url = get_reset_url(request.context, username, user_email, request)
+
+    policy = component.getUtility(ISitePolicyUserEventListener)
+    base_template = getattr(policy,
+                            'ADMIN_TRIGGERED_USER_PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
+                            'admin_triggered_user_password_reset')
     
-        self.queue_email(email_recipients=email_assoc_with_account, 
-                         args=args,
-                         package=package, 
-                         text_ext=text_ext, 
-                         base_template=base_template, 
-                         policy=policy)
+    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
     
-        return hexc.HTTPNoContent()        
+    package = getattr(policy, 'PACKAGE', None)
+
+
+    args = {'users': request.context,
+            'user': request.context,
+            'reset_url': reset_url,
+            'email': user_email,
+            'support_email': support_email,
+            'external_reset_url': ''}
+
+    if reset_url and request.application_url not in reset_url:
+        args['external_reset_url'] = reset_url
+
+    queue_email(email_recipients=user_email, 
+                     args=args, 
+                     package=package, 
+                     text_ext=".mak",
+                     request=request, 
+                     base_template=base_template, 
+                     policy=policy)
+    
+    return hexc.HTTPNoContent()        
 
 def _site_policy():
     return component.getUtility(ISitePolicyUserEventListener)
