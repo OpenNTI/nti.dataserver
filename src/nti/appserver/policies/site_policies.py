@@ -78,6 +78,8 @@ from nti.contentfragments import censor
 
 from nti.contentfragments.interfaces import ICensoredContentPolicy
 
+from nti.dataserver.authorization import is_admin
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import INewUserPlacer
@@ -588,6 +590,12 @@ class AbstractSitePolicyEventListener(object):
 
 	def _creator_name(self, request):
 		creator = get_remote_user(request=request)
+
+		# Prefer not to use names of administrators not directly associated
+		# with the site.
+		if is_admin(creator):
+			return "An administrator"
+
 		creator_name = component.getMultiAdapter((creator, request),
 												 IDisplayNameGenerator)()
 		return creator_name

@@ -9,8 +9,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from nti.coremetadata.interfaces import IUser
-
 logger = __import__('logging').getLogger(__name__)
 
 #disable: accessing protected members, too many methods
@@ -52,6 +50,10 @@ from nti.appserver.policies.interfaces import IRequireSetPassword
 from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.coremetadata.interfaces import IUser
+
+from nti.dataserver.authorization import ROLE_ADMIN
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -213,6 +215,18 @@ class TestAdminCreatedUser(AbstractAdminCreatedUser):
 			query_params = self._query_params(match.group(1))
 			assert_that(query_params, has_key("id"))
 			assert_that(query_params, has_key("username"))
+
+			# Using an nti-admin, shouldn't use their display name
+			del mailer.queue[:]
+			self._assign_role(ROLE_ADMIN, admin_user.username)
+			self.generate_user_created_event(user, policy, environ=environ)
+			msg = decodestring(mailer.queue[0].body)
+
+			assert_that(mailer.queue, has_length(1))
+			assert_that(msg,
+						contains_string("An administrator created an account for you"))
+			assert_that(mailer.queue[0].subject,
+						contains_string("Welcome to NTI"))
 
 			# With updated subject
 			del mailer.queue[:]

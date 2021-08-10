@@ -571,7 +571,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, No
         super(TestApplicationCreateUserNonDevmode,self).test_create_user_as_admin()
         mailer = component.getUtility( ITestMailDelivery )
         body = decodestring(mailer.queue[0].body)
-        assert_that(body, contains_string('Admin User created an account for you'))
+        assert_that(body, contains_string('An administrator created an account for you'))
         return mailer
 
     def _test_create_user_by_admin_missing_field(self, data, missing_field ):
