@@ -17,6 +17,8 @@ from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
+from zope.i18n import translate
+
 from zope.intid.interfaces import IIntIds
 
 from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
@@ -329,6 +331,7 @@ def user_mention_emailer(event):
         template_args['notable'] = notable
 
         notable_context = get_top_level_context(mentionable)
+
         subject = _(u"${creator} mentioned you in ${context}",
                     mapping={'creator': notable.creator,
                              'context': notable_context})
@@ -347,7 +350,7 @@ def user_mention_emailer(event):
         mailer.queue_simple_html_text_email(
             template,
             package=push_pkg,
-            subject=subject,
+            subject=translate(subject, context=request),
             recipients=[user],
             text_template_extension=".mak",
             template_args=template_args,
