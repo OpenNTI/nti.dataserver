@@ -258,7 +258,10 @@ class TestSubscribers(ApplicationLayerTest):
 		self._add_comment(mouse_user, topic, body=body, request=request,
 						  mentions=mentions)
 		assert_that(mailer.queue, has_length(1))
-		assert_that(_decode_message(mailer.queue[0]),
+		msg = mailer.queue[0]
+		
+		assert_that(msg.subject, is_('mmouse@nextthought.com mentioned you in Course Name'))
+		assert_that(_decode_message(msg),
 					contains_string("%s..." % (body_text[:250],)))
 
 		# Sent with no body
