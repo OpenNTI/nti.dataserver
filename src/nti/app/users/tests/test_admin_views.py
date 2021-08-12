@@ -1047,6 +1047,7 @@ class TestAdminViews(ApplicationLayerTest):
             user = self._create_user(test_username)
             site_admin = self._create_user(test_admin_username)
             IUserProfile(user).email = test_email
+            IUserProfile(site_admin).alias = u'Test Admin'
             catalog = get_entity_catalog()
             intids = component.getUtility(IIntIds)
             doc_id = intids.getId(user)
@@ -1094,6 +1095,12 @@ class TestAdminViews(ApplicationLayerTest):
         
         subject = mailer.queue[0].subject
         assert_that(subject, contains_string('NextThought Password Reset'))
+        
+        msg = mailer.queue[0].body
+        assert_that(msg, contains_string('Test=20Admin'))
+        
+        msg = mailer.queue[1].body
+        assert_that(msg, contains_string('an=20Administrator'))
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)

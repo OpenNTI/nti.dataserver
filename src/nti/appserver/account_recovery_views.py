@@ -37,8 +37,6 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.app.authentication import IAuthenticationValidator
 
-from nti.app.base.abstract_views import AbstractAuthenticatedView
-
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.internalization import update_object_from_external_object
@@ -54,6 +52,7 @@ from nti.appserver.interfaces import IApplicationSettings
 
 from nti.coremetadata.interfaces import IUsernameSubstitutionPolicy
 
+from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUser
@@ -395,6 +394,8 @@ def ForgotPasscodeView(request):
 def AdminTriggeredUserPasswordReset(request):
    
     remote_user = User.get_user(request.authenticated_userid)
+    remote_user_display_name = component.getMultiAdapter((remote_user, request),
+                                         IDisplayNameGenerator)()
     
     # Make sure this is a site or NT_admin, not a regular user
     if not is_admin_or_site_admin(remote_user):
@@ -423,15 +424,19 @@ def AdminTriggeredUserPasswordReset(request):
     reset_url = _get_reset_url(request.context, username, user_email, request)
 
     policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = 'admin_triggered_user_password_reset_email'
+    base_template = getattr(policy,
+                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
+                            'password_reset_email')
     
     support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
     
     package = getattr(policy, 'PACKAGE', None)
 
-
     args = {'users': request.context,
             'user': request.context,
+            'remote_user': remote_user,
+            'remote_user_display_name': remote_user_display_name,
+            'remote_user_is_super_admin': is_admin(remote_user),
             'reset_url': reset_url,
             'email': user_email,
             'support_email': support_email,

@@ -1,8 +1,25 @@
 Hello ${user.username}.
 
+%if not remote_user:
 You are receiving this notification because you (or someone pretending
 to be you) requested your ${request.application_url} password be reset for
 ${user.username}.
+%endif
+
+%if remote_user:
+You are receiving this notification because
+
+	%if remote_user_is_super_admin:
+	an Administrator
+	%endif
+
+	%if not remote_user_is_super_admin:
+	${remote_user_display_name}
+	%endif
+
+requested your ${request.application_url} password be reset for
+${user.username}.
+%endif
 
 %if not external_reset_url:
 To reset your password, follow these steps within one hour of
