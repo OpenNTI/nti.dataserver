@@ -66,26 +66,8 @@
 	<!-- Languages -->
 	<include package="nti.app.pyramid_zope" />
 
-	<!-- Zope Requests. This is also cacheable. -->
-	<!--
-		XXX: If the zope.publisher package gets configured, as it
-		does during the API doc process,  we
-		conflict. Why don't we just load it?
-	-->
-	<adapter factory="zope.publisher.browser.ModifiableBrowserLanguages"
-			 provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"
-			 zcml:condition="not-have in-apidoc" />
-
-	<!-- Charsets -->
-	<adapter factory="zope.publisher.http.HTTPCharsets"
-			 provides="zope.i18n.interfaces.IUserPreferredCharsets"
-			 zcml:condition="not-have in-apidoc" />
-
 	<!-- Country resources -->
 	<include package="nti.i18n" />
-
-	<!-- Misc -->
-	<include package="nti.app.i18n" />
 
 	<!-- __________________ -->
 
