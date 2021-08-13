@@ -155,7 +155,6 @@ def _logon_account_views(pyramid_config):
 	pyramid_config.add_route(name="logon.forgot.username", pattern="/dataserver2/logon.forgot.username")
 	pyramid_config.add_route(name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode")
 	pyramid_config.add_route(name="logon.reset.passcode", pattern="/dataserver2/logon.reset.passcode")
-	pyramid_config.add_route(name="objects.generic.traversal", pattern="/dataserver2/admin.user_password_reset")
 
 	pyramid_config.scan('nti.appserver.account_recovery_views')
 
