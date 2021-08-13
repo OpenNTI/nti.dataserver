@@ -316,7 +316,7 @@ SET_INITIAL_PASS_DAYS = 7
 @view_config(route_name=REL_FORGOT_PASSCODE,
              request_method='POST',
              renderer='rest')
-def ForgotPasscodeView(request):
+def forgot_passcode_view(request):
     """
     Initiate the recovery workflow for a lost/forgotten password by taking
     the email address associated with the account as a POST parameter named 'email'
@@ -395,7 +395,7 @@ def ForgotPasscodeView(request):
              request_method='POST',
              renderer='rest',
              context=IUser)
-def AdminTriggeredUserPasswordReset(request):
+def admin_triggered_user_password_reset_view(request):
    
     remote_user = User.get_user(request.authenticated_userid)
     remote_user_display_name = component.getMultiAdapter((remote_user, request),
