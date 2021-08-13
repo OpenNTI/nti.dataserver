@@ -84,7 +84,8 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
-from nti.dataserver.interfaces import IUser, ISiteAdminUtility
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISiteAdminUtility
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsersFolder
@@ -124,7 +125,8 @@ from nti.site.hostpolicy import get_host_site
 from nti.site.hostpolicy import get_all_host_sites
 
 from nti.zodb.containers import bit64_int_to_time
-from nti.dataserver.authorization import is_site_admin, is_admin
+from nti.dataserver.authorization import is_site_admin
+from nti.dataserver.authorization import is_admin
 
 ITEMS = StandardExternalFields.ITEMS
 TOTAL = StandardExternalFields.TOTAL

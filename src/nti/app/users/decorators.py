@@ -34,6 +34,8 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
 
+from nti.appserver.account_recovery_views import REL_ADMIN_TRIGGERED_PASSCODE_RESET
+
 from nti.coremetadata.interfaces import IDeactivatedUser
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
@@ -156,7 +158,9 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
             if IRequireSetPassword.providedBy(context):
                 link = Link(context, elements=('@@AdminUserUpdate',), rel="AdminUserUpdate")
                 _links.append(link)
-
+            link = Link(context, elements=('@@' + REL_ADMIN_TRIGGERED_PASSCODE_RESET,), 
+                        rel=REL_ADMIN_TRIGGERED_PASSCODE_RESET)
+            _links.append(link)
 
 @component.adapter(ICommunity)
 @interface.implementer(IExternalMappingDecorator)

@@ -28,6 +28,8 @@ from nti.testing.matchers import validly_provides
 
 import fudge
 
+from quopri import decodestring
+
 from zope import annotation
 from zope import interface
 from zope import component
@@ -60,10 +62,14 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.appserver.account_recovery_views import REL_ADMIN_TRIGGERED_PASSCODE_RESET
+
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener,\
     IRequireSetPassword
 
 from nti.appserver.policies.site_policies import AdultCommunitySitePolicyEventListener
+
+from nti.appserver.tests import ITestMailDelivery
 
 from nti.dataserver.authorization import ROLE_SITE_ADMIN
 
@@ -1029,6 +1035,74 @@ class TestAdminViews(ApplicationLayerTest):
                                extra_environ=nt_admin_environ)
         res = res.json_body
         assert_that(res['ItemCount'], is_(2))
+        
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_admin_triggered_passcode_reset(self):
+        """
+        Validate admins can trigger a password reset for a user, and only users they have permission over
+        """
+        test_username = u'test_user_passcode_reset'
+        test_admin_username = u'test_reset_admin'
+        test_email = u'%s@gmail.com' % test_username
+    
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = self._create_user(test_username)
+            site_admin = self._create_user(test_admin_username)
+            IUserProfile(user).email = test_email
+            IUserProfile(site_admin).alias = u'Test Admin'
+            catalog = get_entity_catalog()
+            intids = component.getUtility(IIntIds)
+            doc_id = intids.getId(user)
+            catalog.index_doc(doc_id, user)
+            set_user_creation_site(user, 'alpha.dev')
+            set_user_creation_site(site_admin, 'alpha.dev')
+    
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.dev'):
+            principal_role_manager = IPrincipalRoleManager(getSite())
+            principal_role_manager.assignRoleToPrincipal(ROLE_SITE_ADMIN.id,
+                                                         test_admin_username)
+    
+        admin_environ = self._make_extra_environ(user=test_admin_username)
+        admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        user_environ = self._make_extra_environ(user=test_username)
+        user_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+        nt_admin_environ = self._make_extra_environ()
+        nt_admin_environ['HTTP_ORIGIN'] = 'http://alpha.dev'
+    
+        resolve_url = '/dataserver2/ResolveUser/%s' % test_username
+        res = self.testapp.get(resolve_url, extra_environ=admin_environ)
+        res = res.json_body
+        res = res['Items'][0]
+        
+        mailer = component.getUtility( ITestMailDelivery )
+    
+        admin_triggered_user_passcode_reset_href = self.require_link_href_with_rel(res, REL_ADMIN_TRIGGERED_PASSCODE_RESET)
+        data = {'success': 'http://localhost/place'}
+        self.testapp.post(admin_triggered_user_passcode_reset_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=admin_environ, status=204)
+        self.testapp.post(admin_triggered_user_passcode_reset_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=nt_admin_environ, status=204)
+        self.testapp.post(admin_triggered_user_passcode_reset_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=user_environ, status=403)
+        assert_that( mailer.queue, has_length( 2 ) )
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user(test_username)
+            set_user_creation_site(user, 'fake')
+        self.testapp.post(admin_triggered_user_passcode_reset_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=admin_environ, status=403)
+        self.testapp.post(admin_triggered_user_passcode_reset_href, data, content_type='application/x-www-form-urlencoded', 
+                          extra_environ=nt_admin_environ, status=204)
+        assert_that( mailer.queue, has_length( 3 ) )
+        
+        subject = mailer.queue[0].subject
+        assert_that(subject, contains_string('NextThought Password Reset'))
+        
+        msg = mailer.queue[0]
+        assert_that(decodestring(msg.body), contains_string('Test Admin'))
+        
+        msg = mailer.queue[1]
+        assert_that(decodestring(msg.body), contains_string('an Administrator'))
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)
