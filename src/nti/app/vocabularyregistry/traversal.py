@@ -19,6 +19,7 @@ from zope.location.interfaces import LocationError
 from zope.location.location import LocationProxy
 
 from zope.schema.interfaces import IVocabulary
+from zope.schema.interfaces import IVocabularyFactory
 
 from zope.traversing.interfaces import IPathAdapter
 
@@ -58,6 +59,11 @@ class VocabulariesPathAdapter(Contained):
 
     def traverse(self, name, furtherPath):
         vocab = component.queryUtility(IVocabulary, name=name)
+        if vocab is None:
+            factory = component.queryUtility(IVocabularyFactory, name=name)
+            if factory is not None:
+                vocab = factory()
+        
         if vocab is None:
             raise LocationError(name)
 
