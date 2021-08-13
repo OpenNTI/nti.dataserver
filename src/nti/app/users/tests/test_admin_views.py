@@ -28,6 +28,8 @@ from nti.testing.matchers import validly_provides
 
 import fudge
 
+from quopri import decodestring
+
 from zope import annotation
 from zope import interface
 from zope import component
@@ -1096,11 +1098,11 @@ class TestAdminViews(ApplicationLayerTest):
         subject = mailer.queue[0].subject
         assert_that(subject, contains_string('NextThought Password Reset'))
         
-        msg = mailer.queue[0].body
-        assert_that(msg, contains_string('Test=20Admin'))
+        msg = mailer.queue[0]
+        assert_that(decodestring(msg.body), contains_string('Test Admin'))
         
-        msg = mailer.queue[1].body
-        assert_that(msg, contains_string('an=20Administrator'))
+        msg = mailer.queue[1]
+        assert_that(decodestring(msg.body), contains_string('an Administrator'))
 
     @WithSharedApplicationMockDS(users=(u'test001', u'test002', u'admin001@nextthought.com'), testapp=True,
                                  default_authenticate=True)

@@ -36,6 +36,7 @@ class _SiteUsersLinkProvider(object):
             users_folder = find_interface(self.user, IUsersFolder)
             lnk = Link(users_folder, rel='SiteUsers', method='GET',
                        elements=('@@SiteUsers',))
+            
             result.append(lnk)
             for rel in (VIEW_LINK_EXTERNAL_IDS_CSV, 'BatchDeactivate', 'BatchReactivate'):
                 lnk = Link(users_folder,

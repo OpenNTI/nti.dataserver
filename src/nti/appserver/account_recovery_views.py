@@ -93,7 +93,7 @@ REL_RESET_PASSCODE = 'logon.reset.passcode'
 #: reset of a user's password. The user must be administrable by this admin,
 #: be it a site or NT admin. Sends the password reset email to a the selected
 #: user.
-REL_ADMIN_TRIGGERED_PASSCODE_RESET = 'admin.user_password_reset.request'
+REL_ADMIN_TRIGGERED_PASSCODE_RESET = 'admin.user_password_reset'
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -159,15 +159,22 @@ def _get_reset_url(user, username, user_email, request):
         reset_url = None
     return reset_url 
 
-def _queue_email(email_recipients, args, package, text_ext, request, base_template=None, policy=None): 
+def _queue_forgot_password_email(email_recipients, args, text_ext, request, package=None, 
+                                 base_template=None, policy=None): 
     if policy is None:
         policy = _site_policy()
+        
     if base_template is None:
         base_template = getattr(policy,
                             'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
                             'password_reset_email')
+        
+    if package is None:
+        package = getattr(policy, 'PACKAGE', None)
 
-    subject = compute_reset_subject(policy, request)  
+    subject = compute_reset_subject(policy, request) 
+    
+    args['support_email'] = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
     
     queue_simple_html_text_email(base_template,
                                  subject=_(subject),
@@ -329,13 +336,12 @@ def ForgotPasscodeView(request):
     email_assoc_with_account = _preflight_email_based_request(request)
     username = _get_username(request)
     policy = _site_policy()       
+            
+    _check_success_redirect_value(request)
+    
     base_template = getattr(policy,
                             'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
                             'password_reset_email')
-            
-    package = getattr(policy, 'PACKAGE', None)
-    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-    _check_success_redirect_value(request)
     
     matching_users = find_users_with_email(email_assoc_with_account,
                                                component.getUtility(IDataserver),
@@ -370,15 +376,13 @@ def ForgotPasscodeView(request):
             'user': matching_user,
             'reset_url': reset_url,
             'email': email_assoc_with_account,
-            'support_email': support_email,
             'external_reset_url': ''}
 
     if reset_url and request.application_url not in reset_url:
         args['external_reset_url'] = reset_url
 
-    _queue_email(email_recipients=email_assoc_with_account, 
+    _queue_forgot_password_email(email_recipients=email_assoc_with_account, 
                      args=args,
-                     package=package, 
                      text_ext=text_ext,
                      request=request, 
                      base_template=base_template, 
@@ -422,16 +426,7 @@ def AdminTriggeredUserPasswordReset(request):
     
     _check_success_redirect_value(request)
     reset_url = _get_reset_url(request.context, username, user_email, request)
-
-    policy = component.getUtility(ISitePolicyUserEventListener)
-    base_template = getattr(policy,
-                            'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME',
-                            'password_reset_email')
-    
-    support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
-    
-    package = getattr(policy, 'PACKAGE', None)
-
+        
     args = {'users': request.context,
             'user': request.context,
             'remote_user': remote_user,
@@ -439,20 +434,15 @@ def AdminTriggeredUserPasswordReset(request):
             'remote_user_is_super_admin': is_admin(remote_user),
             'reset_url': reset_url,
             'email': user_email,
-            'support_email': support_email,
             'external_reset_url': ''}
 
     if reset_url and request.application_url not in reset_url:
         args['external_reset_url'] = reset_url
 
-    _queue_email(email_recipients=user_email, 
+    _queue_forgot_password_email(email_recipients=user_email, 
                      args=args, 
-                     package=package, 
                      text_ext=".mak",
-                     request=request, 
-                     base_template=base_template, 
-                     policy=policy)
-    
+                     request=request)    
     return hexc.HTTPNoContent()        
 
 def _site_policy():
