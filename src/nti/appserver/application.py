@@ -156,8 +156,6 @@ def _logon_account_views(pyramid_config):
 	pyramid_config.add_route(name="logon.forgot.passcode", pattern="/dataserver2/logon.forgot.passcode")
 	pyramid_config.add_route(name="logon.reset.passcode", pattern="/dataserver2/logon.reset.passcode")
 
-	pyramid_config.scan('nti.appserver.account_recovery_views')
-
 def _webapp_resource_views(pyramid_config, settings):
 	# Site-specific CSS packages
 	web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
@@ -696,6 +694,7 @@ def createApplication( http_port,
 		jwt_secret=settings.get('jwt_secret', '$Id$'),
 		jwt_issuer=settings.get('jwt_issuer', None))
 
+
 	_logon_account_views(pyramid_config)
 	_webapp_resource_views(pyramid_config, settings)
 
@@ -714,6 +713,8 @@ def createApplication( http_port,
 	# NOTE: More things are moving into this.
 	# NOTE: This is hacked above, and also hacked below
 	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
+	# Some views require traversal here
+	pyramid_config.scan('nti.appserver.account_recovery_views')
 	
 	_ugd_odata_views(pyramid_config)
 
