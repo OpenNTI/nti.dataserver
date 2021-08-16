@@ -697,7 +697,6 @@ def createApplication( http_port,
 		jwt_issuer=settings.get('jwt_issuer', None))
 
 
-	_logon_account_views(pyramid_config)
 	_webapp_resource_views(pyramid_config, settings)
 
 	_socketio_views(pyramid_config)
@@ -715,7 +714,8 @@ def createApplication( http_port,
 	# NOTE: More things are moving into this.
 	# NOTE: This is hacked above, and also hacked below
 	pyramid_config.load_zcml( 'nti.appserver:pyramid.zcml' ) # must use full spec, we may not have created the pyramid_config object so its working package may be unknown
-
+	_logon_account_views(pyramid_config)
+	
 	_ugd_odata_views(pyramid_config)
 
 	# scan packages
