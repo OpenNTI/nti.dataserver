@@ -92,21 +92,33 @@ class SiteUsersView(AbstractEntityViewMixin):
         return is_true(self.params.get('filterAdmins', 'False'))
 
     @Lazy
-    def admin_intids(self):
+    def site_admin_intids(self):
         """
         Return a set of site admin intids.
         """
         intids = component.getUtility(IIntIds)
         all_site_admins = get_site_admins()
+        result = set()
+        for user in all_site_admins:
+            result.add(intids.getId(user))
+        return result
+    
+    @Lazy
+    def admin_intids(self):
+        """
+        Return a set of admin intids.
+        """
+        intids = component.getUtility(IIntIds)
         admins = get_admins()
         result = set()
-        for user in itertools.chain(all_site_admins, admins):
+        for user in admins:
             result.add(intids.getId(user))
         return result
 
     def get_entity_intids(self, site=None):
         # The parent class will handle any deactivated entity filtering.
-        return intids_of_users_by_site(site, filter_deactivated=False)
+        result = intids_of_users_by_site(site, filter_deactivated=False)
+        return self.entity_catalog.family.IF.difference(result, self.admin_intids)
 
     def get_externalizer(self, user):
         # pylint: disable=no-member
@@ -135,7 +147,7 @@ class SiteUsersView(AbstractEntityViewMixin):
         result = self.mime_type(doc_id) == 'application/vnd.nextthought.user' \
              and super(SiteUsersView, self).search_include(doc_id)
         if result and self.filterAdmins:
-            result = doc_id not in self.admin_intids
+            result = doc_id not in self.site_admin_intids
         return result
     
     @Lazy
