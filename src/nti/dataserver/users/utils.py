@@ -18,10 +18,18 @@ from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
+from zope.securitypolicy.interfaces import Allow
+from zope.securitypolicy.interfaces import IPrincipalRoleManager
+
 from nti.coremetadata.interfaces import ICommunity
 from nti.coremetadata.interfaces import IDeactivatedUser
 
+from nti.dataserver.authorization import ROLE_ADMIN
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
+
+from nti.dataserver.users import User
 
 from nti.dataserver.users.index import IX_SITE
 from nti.dataserver.users.index import IX_EMAIL
@@ -293,8 +301,35 @@ def get_users_by_email(email):
     return result
 
 
+def _get_nt_admin_intids():
+    """
+    Return a set of all NT admin intids.
+    """
+    result = set()
+    dataserver = component.getUtility(IDataserver)
+    ds_folder = dataserver.root_folder['dataserver2']
+    try:
+        srm = IPrincipalRoleManager(ds_folder, None)
+    except TypeError:
+        # SiteManagerContainer (tests)
+        srm = None
+    if srm is not None:
+        intids = component.getUtility(IIntIds)
+        for prin_id, access in srm.getPrincipalsForRole(ROLE_ADMIN.id):
+            if access == Allow:
+                user = User.get_user(prin_id)
+                user_intid = intids.queryId(user)
+                if user_intid is not None:
+                    result.add(user_intid)
+    return result
+
+
 def intids_of_users_by_sites(sites=(), catalog_filters=None, filter_deactivated=True):
     """
+    Return a set of intids for all users in the current site (unless given 
+    via param). If happened to be created within a site, NT admins are 
+    always filtered of this list. By default, deactivated users are filtered
+    out of the result set.
     catalog_filters - a dict of key/val filters. Will raise a KeyError
         if their is not an index for the catalog filer.
     """
@@ -327,6 +362,9 @@ def intids_of_users_by_sites(sites=(), catalog_filters=None, filter_deactivated=
         deactivated_idx = catalog[IX_TOPICS][IX_IS_DEACTIVATED]
         deactivated_ids = catalog.family.IF.Set(deactivated_idx.getIds() or ())
         doc_ids = catalog.family.IF.difference(doc_ids, deactivated_ids)
+    # Always filter out NT admins
+    admin_intids = _get_nt_admin_intids()
+    doc_ids = catalog.family.IF.difference(doc_ids, admin_intids)
     return doc_ids or ()
 
 

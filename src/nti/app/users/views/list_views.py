@@ -103,22 +103,9 @@ class SiteUsersView(AbstractEntityViewMixin):
             result.add(intids.getId(user))
         return result
     
-    @Lazy
-    def admin_intids(self):
-        """
-        Return a set of admin intids.
-        """
-        intids = component.getUtility(IIntIds)
-        admins = get_admins()
-        result = set()
-        for user in admins:
-            result.add(intids.getId(user))
-        return result
-
     def get_entity_intids(self, site=None):
         # The parent class will handle any deactivated entity filtering.
-        result = intids_of_users_by_site(site, filter_deactivated=False)
-        return self.entity_catalog.family.IF.difference(result, self.admin_intids)
+        return intids_of_users_by_site(site, filter_deactivated=False)
 
     def get_externalizer(self, user):
         # pylint: disable=no-member

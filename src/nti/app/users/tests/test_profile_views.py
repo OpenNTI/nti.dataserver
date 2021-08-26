@@ -51,12 +51,15 @@ class TestUserInfoExtractView(ApplicationLayerTest):
             user = self._create_user(external_value={'email': u"nti@nt.com",
                                                      'realname': u'steve johnson',
                                                      'alias': u'citadel'})
+            # NT admin will not come back in user extract
             set_user_creation_site(user, 'mathcounts.nextthought.com')
             lifecycleevent.modified(user)
-            self._create_user(username=u'rukia@nt.com',
-                              external_value={'email': u'rukia@nt.com',
-                                              'realname': u'rukia foo',
-                                              'alias': u'sode no shirayuki'})
+            user = self._create_user(username=u'rukia@nt.com',
+                                     external_value={'email': u'rukia@nt.com',
+                                                     'realname': u'rukia foo',
+                                                     'alias': u'sode no shirayuki'})
+            set_user_creation_site(user, 'mathcounts.nextthought.com')
+            lifecycleevent.modified(user)
             self._create_user(username=u'ichigo@nt.com',
                               external_value={'email': u'ichigo@nt.com',
                                               'realname': u'イチゴ Kurosaki',
