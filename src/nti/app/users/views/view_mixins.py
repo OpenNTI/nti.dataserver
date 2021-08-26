@@ -823,7 +823,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         # affect client side paging.
         item_count = len(result[ITEMS])
         batch_size,batch_start = self._get_batch_size_start()
-        if item_count<batch_size:
+        if item_count < batch_size:
             # We at least do not want to return pages if we do not have any
             result[TOTAL] = result['TotalItemCount'] = item_count + batch_start
         else:
