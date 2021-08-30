@@ -184,7 +184,7 @@ class SiteUsersCSVView(SiteUsersView,
                context=IUsersFolder,
                renderer='rest',
                permission=nauth.ACT_READ,
-               decorator=_download_cookie_decorator,
+               decorator=download_cookie_decorator,
                request_param='format=text/csv')
 class SiteUsersCSVPOSTView(SiteUsersCSVView, 
                            ModeledContentUploadRequestUtilsMixin):
