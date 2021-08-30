@@ -29,6 +29,8 @@ from zope.component.hooks import getSite
 
 from zope.intid.interfaces import IIntIds
 
+from nti.app.base.abstract_views import download_cookie_decorator
+
 from nti.app.externalization.error import raise_json_error
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -156,42 +158,13 @@ class SiteUsersView(AbstractEntityViewMixin):
         return result
     
 
-DOWNLOAD_TOKEN_PARAM = 'download-token'
-
-
-def _download_cookie_decorator(view_callable):
-    """
-    To be used as a view decorator, set a cookie indicating the
-    downloadable response is a success or failure.
-    """
-    def wrapper(context, request):
-        if not request.params or not request.params.get(DOWNLOAD_TOKEN_PARAM):
-            return view_callable(context, request)
-        guid = request.params.get(DOWNLOAD_TOKEN_PARAM)
-        cookie_name = 'download-%s' % guid
-        cookie = dict()
-        try:
-            result = view_callable(context, request)
-            cookie[str("success")] = True
-            return result
-        except Exception as exc:
-            cookie[str("error")] = str(exc.message or '')
-            raise exc
-        finally:
-            cookie = simplejson.dumps(cookie)
-            request.response.set_cookie(bytes(cookie_name),
-                                        value=cookie,
-                                        overwrite=True)
-    return wrapper
-    
-    
 @view_config(name='SiteUsers')
 @view_config(name='site_users')
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
                context=IUsersFolder,
                accept='text/csv',
-               decorator=_download_cookie_decorator,
+               decorator=download_cookie_decorator,
                permission=nauth.ACT_READ)
 class SiteUsersCSVView(SiteUsersView,
                        UsersCSVExportMixin):

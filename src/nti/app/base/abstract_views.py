@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 import os
 import cgi
+import simplejson
 
 from requests.structures import CaseInsensitiveDict
 
@@ -255,3 +256,32 @@ def get_source_filer(context=None, user=None, constraint=ISourceFiler):
     if result is None:
         result = component.queryAdapter(user, constraint)
     return result
+
+
+DOWNLOAD_TOKEN_PARAM = 'download-token'
+
+
+def download_cookie_decorator(view_callable):
+    """
+    To be used as a view decorator, set a cookie indicating the
+    downloadable response is a success or failure.
+    """
+    def wrapper(context, request):
+        if not request.params or not request.params.get(DOWNLOAD_TOKEN_PARAM):
+            return view_callable(context, request)
+        guid = request.params.get(DOWNLOAD_TOKEN_PARAM)
+        cookie_name = 'download-%s' % guid
+        cookie = dict()
+        try:
+            result = view_callable(context, request)
+            cookie[str("success")] = True
+            return result
+        except Exception as exc:
+            cookie[str("error")] = str(exc.message or '')
+            raise exc
+        finally:
+            cookie = simplejson.dumps(cookie)
+            request.response.set_cookie(bytes(cookie_name),
+                                        value=cookie,
+                                        overwrite=True)
+    return wrapper
