@@ -8,7 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import itertools
+import simplejson
 import unicodecsv as csv
 
 from pyramid import httpexceptions as hexc
@@ -37,7 +37,6 @@ from nti.app.renderers.interfaces import IUncacheableInResponse
 
 from nti.app.users import MessageFactory as _
 
-from nti.app.users.utils import get_admins
 from nti.app.users.utils import get_site_admins
 from nti.app.users.utils import intids_of_users_by_site
 
@@ -156,6 +155,35 @@ class SiteUsersView(AbstractEntityViewMixin):
         interface.alsoProvides(result, IUncacheableInResponse)
         return result
     
+
+DOWNLOAD_TOKEN_PARAM = 'download-token'
+
+
+def _download_cookie_decorator(view_callable):
+    """
+    To be used as a view decorator, set a cookie indicating the
+    downloadable response is a success or failure.
+    """
+    def wrapper(context, request):
+        if not request.params or not request.params.get(DOWNLOAD_TOKEN_PARAM):
+            return view_callable(context, request)
+        guid = request.params.get(DOWNLOAD_TOKEN_PARAM)
+        cookie_name = 'download-%s' % guid
+        cookie = dict()
+        try:
+            result = view_callable(context, request)
+            cookie[str("success")] = True
+            return result
+        except Exception as exc:
+            cookie[str("error")] = str(exc.message or '')
+            raise exc
+        finally:
+            cookie = simplejson.dumps(cookie)
+            request.response.set_cookie(bytes(cookie_name),
+                                        value=cookie,
+                                        overwrite=True)
+    return wrapper
+    
     
 @view_config(name='SiteUsers')
 @view_config(name='site_users')
@@ -163,6 +191,7 @@ class SiteUsersView(AbstractEntityViewMixin):
                request_method='GET',
                context=IUsersFolder,
                accept='text/csv',
+               decorator=_download_cookie_decorator,
                permission=nauth.ACT_READ)
 class SiteUsersCSVView(SiteUsersView,
                        UsersCSVExportMixin):
@@ -182,6 +211,7 @@ class SiteUsersCSVView(SiteUsersView,
                context=IUsersFolder,
                renderer='rest',
                permission=nauth.ACT_READ,
+               decorator=_download_cookie_decorator,
                request_param='format=text/csv')
 class SiteUsersCSVPOSTView(SiteUsersCSVView, 
                            ModeledContentUploadRequestUtilsMixin):

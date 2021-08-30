@@ -9,6 +9,7 @@ from __future__ import absolute_import
 
 from hamcrest import is_
 from hamcrest import is_not
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -16,6 +17,10 @@ from hamcrest import contains_string
 does_not = is_not
 
 import fudge
+
+import simplejson as json
+
+from webob.cookies import parse_cookie
 
 from zope import lifecycleevent
 
@@ -102,7 +107,19 @@ class TestListViews(ApplicationLayerTest):
         # CSV
         params = {"site": 'bleach.org', 'sortOn': 'createdTime'}
         headers = {'accept': str('text/csv')}
+        
+        # Call without download-token param works
+        self.testapp.get(url, params, status=200, headers=headers)
+        # As does call with empty string
+        params['download-token'] = ''
+        self.testapp.get(url, params, status=200, headers=headers)
+        params['download-token'] = 1234
         res = self.testapp.get(url, params, status=200, headers=headers)
+        cookies = dict(parse_cookie(res.headers['Set-Cookie']))
+        assert_that(cookies, has_item('download-1234'))
+        cookie_res = json.loads(cookies['download-1234'])
+        assert_that(cookie_res, has_entry('success', True))
+        
         assert_that(res.body, contains_string('username,realname,alias,email,createdTime,lastLoginTime,ext id1'))
         assert_that(res.body, contains_string('aaaaaa'))
         
