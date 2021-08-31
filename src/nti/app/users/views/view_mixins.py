@@ -801,6 +801,15 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         intids = component.getUtility(IIntIds)
         rs = ResultSet(sorted_entity_ids, intids)
         return rs
+    
+    def _post_numeric_sorting(self, ext_res, sort_on, reverse):
+        """
+        Sorts the `Items` in the result dict in-place, using the sort_on
+        and reverse params.
+        """
+        ext_res[ITEMS] = sorted(ext_res[ITEMS],
+                                key=lambda x: getattr(x, sort_on, 0),
+                                reverse=reverse)
 
     def _do_call(self):
         result = LocatedExternalDict()
@@ -811,9 +820,7 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
             # If we are sorting by time, we are indexed normalized to a minute.
             # We sort here by the actual value to correct this.
             reverse = self.sortOrder=='descending'
-            result[ITEMS] = sorted(result[ITEMS],
-                                   key=lambda x: getattr(x, self.sortOn, 0),
-                                   reverse=reverse)
+            self._post_numeric_sorting(result, self.sortOn, reverse)
         # transform only the required items
         result[ITEMS] = [
             self.transformer(x) for x in result[ITEMS]
