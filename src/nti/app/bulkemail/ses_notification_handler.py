@@ -26,6 +26,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+
+from contextlib import contextmanager
 import os
 import argparse
 import simplejson as json
@@ -36,11 +38,13 @@ from boto.sqs.message import RawMessage
 
 from zope import component
 
-from zope.interface.exceptions import Invalid
+from zope.component.hooks import site
 
 from nti.appserver.account_recovery_views import find_users_with_email
 
 from nti.appserver.link_providers import flag_link_provider
+
+from nti.app.users.utils import get_user_creation_site
 
 from nti.appserver.logon import REL_INVALID_EMAIL
 from nti.appserver.logon import REL_INVALID_CONTACT_EMAIL
@@ -55,9 +59,19 @@ from nti.dataserver.utils import run_with_dataserver
 
 from nti.mailer.interfaces import IVERP
 
+
+@contextmanager
+def nullcontext():
+	yield None
+
+
 def _unverify_email(user):
-	IUserProfile( user ).email_verified = False
+	creation_site = get_user_creation_site(user)
+	effective_ctx_mgr = site(creation_site) if creation_site is not None else nullcontext()
+	with effective_ctx_mgr:
+		IUserProfile( user ).email_verified = False
 	unindex_email_verification(user)
+
 
 def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 	"""
@@ -90,6 +104,13 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 		logger.info( "The following users are associated with the email address %s (looking for %s): %s",
 					 email_addr, possible_pid or '', users )
 		for user, match_type in users:
+			# We only have a possible pid when verp properly unsigns
+			# (generally in the originating env).  The logic below prevents
+			# other accounts with the same email in that env from being
+			# marked invalid.  All accounts in all other envs with matching
+			# email will be marked invalid.  Though that's likely less
+			# often outside of NT accounts, still not sure I understand the
+			# rationale, given the email is the problem, not the account.
 			if possible_pid:
 				if user.username.lower() != possible_pid.lower():
 					continue
