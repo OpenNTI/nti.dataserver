@@ -76,6 +76,7 @@ logger = __import__('logging').getLogger(__name__)
 @view_defaults(route_name='objects.generic.traversal',
                request_method='GET',
                context=IUsersFolder,
+               accept='application/json',
                permission=nauth.ACT_READ)
 class SiteUsersView(AbstractEntityViewMixin):
 

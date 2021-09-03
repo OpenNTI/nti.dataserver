@@ -591,6 +591,8 @@ def createApplication( http_port,
 										 weighs_less_than=('application/json',))
 	pyramid_config.add_accept_view_order('application/vnd.nextthought.link+json',
 										 weighs_less_than=('application/json',))
+	pyramid_config.add_accept_view_order('text/csv',
+										 weighs_less_than=('application/json',))
 
 	# content_type predicate for view_config.
 	pyramid_config.add_view_predicate('content_type', pyramid_predicates.ContentTypePredicate)
