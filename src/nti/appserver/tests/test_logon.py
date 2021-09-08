@@ -271,6 +271,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 				   'email': 'jwt_user_admin_iss_login@nextthought.com',
 				   'create': "true",
 				   'admin': 'true',
+				   'max_age': '3600',
 				   'iss': "unused_issuer"}
 		env = get_environ(payload)
 		res = testapp.get('/dataserver2/logon.nti', extra_environ=env)
@@ -281,6 +282,10 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# The auth_tkt cookie contains both the original and new username
 		assert_that(testapp.cookies['nti.auth_tkt'],
 					 contains_string('jwt_user_admin_iss_login%40nextthought.com!'))
+		auth_cookies = res.headers.dict_of_lists()['set-cookie']
+		auth_cookies = [x for x in auth_cookies if 'nti.auth_tk' in x]
+		for auth_cookie in auth_cookies:
+			assert_that(auth_cookie, contains_string('Max-Age=3600;'))
 
 		# The auth_tkt cookie should not contain any empty username param.
 		# e.g. "username="  The username param is currently being used to signify

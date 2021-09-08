@@ -226,10 +226,11 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 
         api = self._getAPI(request)
         identity = (self._get_identity(request) or {}).copy()
+        max_age = identity.get('max_age') or self._cookie_timeout
         fake_identity = {
             'userdata': remote,
             'repoze.who.userid': principal,
-            'max_age': str(self._cookie_timeout),
+            'max_age': str(max_age),
             'tokens': request.environ.get('REMOTE_USER_TOKENS', ()),
         }
         if (    principal != identity.get('repoze.who.userid')

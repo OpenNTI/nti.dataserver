@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import not_none
+from hamcrest import has_entry
 from hamcrest import assert_that
 
 import unittest
@@ -167,8 +168,13 @@ class TestJWTAuthenticator(unittest.TestCase):
                    'email': 'jwtadmin@nextthought.com',
                    'admin': 'true',
                    'create': "true",
+                   'max_age': '3600',
                    'aud': audience}
         assert_that(do_auth(payload), is_('jwt_user_admin@nextthought.com'))
+        
+        env = get_environ(payload)
+        jwt_id = jwt_auth.identify(env)
+        assert_that(jwt_id, has_entry('max_age', '3600'))
 
         user = User.get_user('jwt_user_admin@nextthought.com')
         assert_that(user, not_none())
@@ -193,6 +199,7 @@ class TestJWTAuthenticator(unittest.TestCase):
                    'email': 'jwtadmin@nextthought.com',
                    'admin': 'true',
                    'create': "true",
+                   'max_age': "3600",
                    'iss': "bad_issuer",
                    'aud': audience}
         env = get_environ(payload)
