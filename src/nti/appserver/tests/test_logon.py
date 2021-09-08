@@ -270,6 +270,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 				   'realname': 'jwt admin',
 				   'email': 'jwt_user_admin_iss_login@nextthought.com',
 				   'create': "true",
+				   'aud': 'dataserver2',
 				   'admin': 'true',
 				   'max_age': '3600',
 				   'iss': "unused_issuer"}

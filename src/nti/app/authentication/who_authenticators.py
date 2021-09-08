@@ -13,7 +13,6 @@ from __future__ import absolute_import
 from jwt import decode
 
 from jwt.exceptions import InvalidTokenError
-from jwt.exceptions import MissingRequiredClaimError
 
 from zope import component
 from zope import interface
@@ -137,26 +136,10 @@ class DataserverJWTAuthenticator(object):
         try:
             # This will validate the payload, including the
             # expiration date. We could also whitelist the issuer here.
-            try:
-                auth = decode(jwt_token, self.secret,
-                              audience=self.current_site_name(),
-                              issuer=self.issuer,
-                              algorithms=JWT_ALGS)
-            except MissingRequiredClaimError as e:
-                # Validating the audience is new. We didn't used to generate tokens
-                # with an aud claim, and we didn't used to provide an audience when validating.
-                # To give us a deployment path forward where we don't have to look step
-                # setup.nextthought.com and all production deployments if we get a token
-                # with no audience, reparse without the audience specified. This allows us to
-                # update the platform deployments and have it work with new and old tokens generated from
-                # asci. What this doesn't help with is new tokens being given to old platform installations.
-                if e.claim != 'aud':
-                    raise
-                auth = decode(jwt_token,
-                              self.secret,
-                              issuer=self.issuer,
-                              algorithms=JWT_ALGS)
-                logger.warn('DEPRECATED: "aud" is now a required claim. Tokens without the "aud" claim will be rejected in a future update')
+            auth = decode(jwt_token, self.secret,
+                          audience=self.current_site_name(),
+                          issuer=self.issuer,
+                          algorithms=JWT_ALGS)
         except InvalidTokenError as e:
             logger.debug('Invalid jwt token provided. %s', e)
             result = None

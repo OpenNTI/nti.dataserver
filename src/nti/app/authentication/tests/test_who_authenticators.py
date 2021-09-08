@@ -182,10 +182,9 @@ class TestJWTAuthenticator(unittest.TestCase):
         assert_that(IUserProfile(user).email, is_('jwtadmin@nextthought.com'))
         assert_that(IUserProfile(user).realname, is_('jwt admin'))
 
-        # For bwc we allow no audience, although this should be removed
-        # in a subsequent deployment
+        # Audience is required
         del payload['aud']
-        assert_that(do_auth(payload), is_('jwt_user_admin@nextthought.com'))
+        assert_that(do_auth(payload, expect_valid=False), none())
 
         # But if there is an audience we reject if it doesn't match.
         payload['aud'] = 'different site'
