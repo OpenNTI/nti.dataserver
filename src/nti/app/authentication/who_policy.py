@@ -173,6 +173,9 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 
         if 'max_age' not in identity:
             identity['max_age'] = str(self._cookie_timeout)
+        else:
+            # We limit the cookie age to no longer than the policy default
+            identity['max_age'] = min(self._cookie_timeout, identity['max_age'])
 
         headers = identifier.remember(request.environ, identity)
 

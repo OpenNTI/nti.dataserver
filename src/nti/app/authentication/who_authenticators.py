@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import time
+
 from jwt import decode
 
 from jwt.exceptions import InvalidTokenError
@@ -82,6 +84,30 @@ class DataserverTokenAuthenticator(object):
             return None
 
 
+ONE_HOUR = 3600
+
+
+def _get_jwt_max_age(jwt_payload):
+    """
+    Return the str max_age for the JWT identity, derived from `exp` 
+    in the jwt payload.
+    """
+    try:
+        exp = jwt_payload['exp']
+        exp = float(exp)
+    except (KeyError, ValueError):
+        return
+    # This should really nearly always be positive right? Otherwise
+    # the decode step would fail. If negative, it should be extremely tiny.
+    ttl = exp - time.time()
+    ttl = max(ttl, 0)
+    if 'admin' in jwt_payload:
+        # Admins default to at least one hour
+        ttl = max(ttl, ONE_HOUR)
+    # This must be an int downstream
+    return str(int(round(ttl)))
+
+
 @interface.implementer(IAuthenticator,
                        IIdentifier)
 class DataserverJWTAuthenticator(object):
@@ -145,6 +171,9 @@ class DataserverJWTAuthenticator(object):
             result = None
         else:
             result = auth
+            max_age = _get_jwt_max_age(auth)
+            if max_age:
+                result['max_age'] = max_age
             environ['IDENTITY_TYPE'] = 'jwt_token'
         return result
 

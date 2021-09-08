@@ -15,6 +15,7 @@ from hamcrest import assert_that
 
 import unittest
 
+import time
 import fudge
 
 from jwt import encode
@@ -26,6 +27,7 @@ from zope.securitypolicy.interfaces import IPrincipalRoleManager
 
 from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenticator
 
+from nti.app.authentication.who_authenticators import _get_jwt_max_age
 from nti.app.authentication.who_authenticators import DataserverJWTAuthenticator
 from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 
@@ -42,6 +44,8 @@ from nti.dataserver.users.interfaces import IUserTokenContainer
 from nti.dataserver.users.tokens import UserToken
 
 from nti.dataserver.users.users import User
+
+from nti.testing.time import time_monotonically_increases
 
 
 class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
@@ -115,6 +119,27 @@ class TestJWTAuthenticator(unittest.TestCase):
         assert_that(jwt_auth.identify({'HTTP_AUTHORIZATION': 'notbearer'}),
                     is_(none()))
 
+    @time_monotonically_increases
+    def test_max_age(self):
+        max_age = _get_jwt_max_age({})
+        assert_that(max_age, none())
+        
+        max_age = _get_jwt_max_age({'exp': 'aaa'})
+        assert_that(max_age, none())
+        
+        # Negative
+        max_age = _get_jwt_max_age({'exp': '60'})
+        assert_that(max_age, is_('0'))
+        
+        now = round(time.time())
+        max_age = _get_jwt_max_age({'exp': str(now + 3600)})
+        assert_that(round(float(max_age)), is_(3599))
+        
+        # Admin defaults to 3600
+        max_age = _get_jwt_max_age({'exp': str(now), 'admin': "true"})
+        assert_that(max_age, is_('3600'))
+        
+
     @WithMockDSTrans
     def test_identify_jwt_token(self):
         jwt_auth = DataserverJWTAuthenticator(secret='jwt_secret')
@@ -167,13 +192,14 @@ class TestJWTAuthenticator(unittest.TestCase):
                    'realname': 'jwt admin',
                    'email': 'jwtadmin@nextthought.com',
                    'admin': 'true',
+                   'exp': time.time() + 300,
                    'create': "true",
-                   'max_age': '3600',
                    'aud': audience}
         assert_that(do_auth(payload), is_('jwt_user_admin@nextthought.com'))
         
         env = get_environ(payload)
         jwt_id = jwt_auth.identify(env)
+        # Admin defaults to one hour
         assert_that(jwt_id, has_entry('max_age', '3600'))
 
         user = User.get_user('jwt_user_admin@nextthought.com')
@@ -198,7 +224,6 @@ class TestJWTAuthenticator(unittest.TestCase):
                    'email': 'jwtadmin@nextthought.com',
                    'admin': 'true',
                    'create': "true",
-                   'max_age': "3600",
                    'iss': "bad_issuer",
                    'aud': audience}
         env = get_environ(payload)

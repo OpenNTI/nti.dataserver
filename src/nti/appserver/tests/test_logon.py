@@ -25,6 +25,8 @@ from hamcrest import starts_with
 from hamcrest import contains_string
 from hamcrest import greater_than_or_equal_to
 
+import time
+
 from datetime import datetime
 from datetime import timedelta
 
@@ -272,7 +274,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 				   'create': "true",
 				   'aud': 'dataserver2',
 				   'admin': 'true',
-				   'max_age': '3600',
+				   'exp': datetime.utcnow() + timedelta(seconds=300),
 				   'iss': "unused_issuer"}
 		env = get_environ(payload)
 		res = testapp.get('/dataserver2/logon.nti', extra_environ=env)
