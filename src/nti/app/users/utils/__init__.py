@@ -49,7 +49,7 @@ from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.base._compat import text_
 from nti.base._compat import bytes_
 
-from nti.dataserver.authorization import ROLE_ADMIN
+from nti.dataserver.authorization import ROLE_ADMIN, is_admin
 from nti.dataserver.authorization import ROLE_SITE_ADMIN
 
 from nti.dataserver.interfaces import IUser
@@ -407,6 +407,7 @@ def get_site_admins(site=None):
     """
     result = []
     site = getSite() if site is None else site
+    nt_admins = get_admins()
     try:
         srm = IPrincipalRoleManager(site, None)
     except TypeError:
@@ -416,7 +417,10 @@ def get_site_admins(site=None):
         for prin_id, access in srm.getPrincipalsForRole(ROLE_SITE_ADMIN.id):
             if access == Allow:
                 user = User.get_user(prin_id)
-                if user is not None:
+                # In alpha we had some dual state users. Not sure 
+                # what do do about that, but since this func is probably
+                # for reporting, we exclude those users here.
+                if user is not None and user not in nt_admins:
                     result.append(user)
     return result
 

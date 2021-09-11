@@ -10,10 +10,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import time
+
 from jwt import decode
 
 from jwt.exceptions import InvalidTokenError
-from jwt.exceptions import MissingRequiredClaimError
 
 from zope import component
 from zope import interface
@@ -83,6 +84,30 @@ class DataserverTokenAuthenticator(object):
             return None
 
 
+ONE_HOUR = 3600
+
+
+def _get_jwt_max_age(jwt_payload):
+    """
+    Return the str max_age for the JWT identity, derived from `exp` 
+    in the jwt payload.
+    """
+    try:
+        exp = jwt_payload['exp']
+        exp = float(exp)
+    except (KeyError, ValueError):
+        return
+    # This should really nearly always be positive right? Otherwise
+    # the decode step would fail. If negative, it should be extremely tiny.
+    ttl = exp - time.time()
+    ttl = max(ttl, 0)
+    if 'admin' in jwt_payload:
+        # Admins default to at least one hour
+        ttl = max(ttl, ONE_HOUR)
+    # This must be an int downstream
+    return str(int(round(ttl)))
+
+
 @interface.implementer(IAuthenticator,
                        IIdentifier)
 class DataserverJWTAuthenticator(object):
@@ -137,31 +162,18 @@ class DataserverJWTAuthenticator(object):
         try:
             # This will validate the payload, including the
             # expiration date. We could also whitelist the issuer here.
-            try:
-                auth = decode(jwt_token, self.secret,
-                              audience=self.current_site_name(),
-                              issuer=self.issuer,
-                              algorithms=JWT_ALGS)
-            except MissingRequiredClaimError as e:
-                # Validating the audience is new. We didn't used to generate tokens
-                # with an aud claim, and we didn't used to provide an audience when validating.
-                # To give us a deployment path forward where we don't have to look step
-                # setup.nextthought.com and all production deployments if we get a token
-                # with no audience, reparse without the audience specified. This allows us to
-                # update the platform deployments and have it work with new and old tokens generated from
-                # asci. What this doesn't help with is new tokens being given to old platform installations.
-                if e.claim != 'aud':
-                    raise
-                auth = decode(jwt_token,
-                              self.secret,
-                              issuer=self.issuer,
-                              algorithms=JWT_ALGS)
-                logger.warn('DEPRECATED: "aud" is now a required claim. Tokens without the "aud" claim will be rejected in a future update')
+            auth = decode(jwt_token, self.secret,
+                          audience=self.current_site_name(),
+                          issuer=self.issuer,
+                          algorithms=JWT_ALGS)
         except InvalidTokenError as e:
             logger.debug('Invalid jwt token provided. %s', e)
             result = None
         else:
             result = auth
+            max_age = _get_jwt_max_age(auth)
+            if max_age:
+                result['max_age'] = max_age
             environ['IDENTITY_TYPE'] = 'jwt_token'
         return result
 
