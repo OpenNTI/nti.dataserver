@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from collections import OrderedDict
+
 import os
 import math
 import time
@@ -97,7 +99,11 @@ def _token(signature):
 
 def _signature_and_token(username, email, secret_key):
     s = SignatureSerializer(secret_key)
-    signature = s.dumps({'email': email, 'username': username})
+
+    # Ensure serialization is identical across boxes in an env so email
+    # verification can't fail b/c it is processed on a box other than the
+    # one that sent the email.
+    signature = s.dumps(OrderedDict([('username', username), ('email', email)]))
     token = _token(signature)
     return signature, token
 
