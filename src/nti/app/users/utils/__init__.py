@@ -108,8 +108,19 @@ def _signature_and_token(username, email, secret_key, legacy_payload=False):
     return signature, token
 
 
-def generate_mail_verification_pair(user, email=None, secret_key=None,
-                                    legacy_payload=False):
+def generate_mail_verification_pair(user, email=None, secret_key=None):
+    return _generate_mail_verification_pair(user, email=email,
+                                            secret_key=secret_key)
+
+
+def generate_legacy_mail_verification_pair(user, email=None, secret_key=None):
+    return _generate_mail_verification_pair(user, email=email,
+                                            secret_key=secret_key,
+                                            legacy_payload=True)
+
+
+def _generate_mail_verification_pair(user, email=None, secret_key=None,
+                                     legacy_payload=False):
     __traceback_info__ = user, email  # pylint: disable=unused-variable
     user = get_user(user)
     if user is None:
@@ -166,8 +177,7 @@ def get_verification_signature_data(user, signature, params=None,
 
 
 def generate_verification_email_url(user, request=None, host_url=None,
-                                    email=None, secret_key=None,
-                                    legacy_payload=False):
+                                    email=None, secret_key=None):
     try:
         ds2 = request.path_info_peek() if request else "/dataserver2"
     except AttributeError:
@@ -180,8 +190,7 @@ def generate_verification_email_url(user, request=None, host_url=None,
 
     signature, token = generate_mail_verification_pair(user=user,
                                                        email=email,
-                                                       secret_key=secret_key,
-                                                       legacy_payload=legacy_payload)
+                                                       secret_key=secret_key)
     params = urllib_parse.urlencode({'username': user.username.lower(),
                                      'signature': signature})
 

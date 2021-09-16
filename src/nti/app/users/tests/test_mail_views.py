@@ -18,6 +18,11 @@ from hamcrest import has_property
 from hamcrest import contains_string
 from hamcrest import matches_regexp
 
+from six.moves import urllib_parse
+
+from nti.app.users import VERIFY_USER_EMAIL_VIEW
+
+from nti.app.users.utils import generate_legacy_mail_verification_pair
 from nti.app.users.utils import generate_mail_verification_pair
 from nti.app.users.utils import get_verification_signature_data
 from nti.app.users.utils import generate_verification_email_url
@@ -47,8 +52,10 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
         signature, _ = generate_mail_verification_pair(user, None,
                                                        secret_key='zangetsu')
         legacy_signature, _ = \
-            generate_mail_verification_pair(user, None, secret_key='zangetsu',
-                                            legacy_payload=True)
+            generate_legacy_mail_verification_pair(user, None,
+                                                   secret_key='zangetsu')
+
+        assert signature != legacy_signature
         # Since the payload is no longer a mapping, this applies only to legacy:
         # Note that we do not test the exact return values of signature and token.
         # They are dependent upon hash values, which may change from version
@@ -74,19 +81,19 @@ class TestMailViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_verify_user_email_with_token(self):
-        self._check_verify_user_email_with_token(legacy_payload=False)
+        self._check_verify_user_email_with_token(generate_mail_verification_pair)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_verify_user_email_with_token_legacy(self):
-        self._check_verify_user_email_with_token(legacy_payload=True)
+        self._check_verify_user_email_with_token(generate_legacy_mail_verification_pair)
 
-    def _check_verify_user_email_with_token(self, legacy_payload=False):
+    def _check_verify_user_email_with_token(self, token_factory):
         email = username = u'ichigo@bleach.org'
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.create_user(username=username, password=u'temp001',
                                     external_value={u'email': email})
 
-            _, token = generate_mail_verification_pair(user)
+            _, token = token_factory(user)
 
         post_data = {'token': token}
         path = '/dataserver2/@@verify_user_email_with_token'
@@ -102,19 +109,27 @@ class TestMailViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_verify_user_email_view(self):
-        self._check_verify_user_email_view(legacy_payload=False)
+        self._check_verify_user_email_view(generate_verification_email_url)
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_verify_user_email_view_legacy(self):
-        self._check_verify_user_email_view(legacy_payload=True)
+        def url_factory(user):
+            signature, token = generate_legacy_mail_verification_pair(user=user)
+            params = urllib_parse.urlencode({'username': user.username.lower(),
+                                             'signature': signature})
 
-    def _check_verify_user_email_view(self, legacy_payload=False):
+            href = '/dataserver2/%s?%s' % ('@@' + VERIFY_USER_EMAIL_VIEW, params)
+            return href, token
+
+        self._check_verify_user_email_view(url_factory)
+
+    def _check_verify_user_email_view(self, url_factory):
         email = username = u'ichigo@bleach.org'
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.create_user(username=username, password=u'temp001',
                                     external_value={u'email': email})
 
-            href, _, = generate_verification_email_url(user, legacy_payload=legacy_payload)
+            href, _, = url_factory(user)
 
         extra_environ = self._make_extra_environ(user=username)
         result = self.testapp.get(href, extra_environ=extra_environ,
