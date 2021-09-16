@@ -57,6 +57,7 @@ from nti.app.users import VIEW_LINK_EXTERNAL_IDS_CSV
 from nti.app.users.utils import set_user_creation_site
 from nti.app.users.utils import get_user_creation_sitename
 from nti.app.users.utils import get_entity_creation_sitename
+from nti.app.users.utils import get_verification_signature_data
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -230,8 +231,15 @@ class TestAdminViews(ApplicationLayerTest):
                                {'username': username},
                                status=200)
 
-        assert_that(res.json_body, has_entry('Signature', has_length(175)))
+        assert_that(res.json_body, has_entry('Signature', has_length(180)))
         assert_that(res.json_body, has_entry('Token', is_(int)))
+
+        sig = res.json_body['Signature']
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user(username)
+            data = get_verification_signature_data(user, sig)
+            assert_that(data, has_entry('username', is_(u'user_one')))
+            assert_that(data, has_entry('email', is_(u'user.one@foo.com')))
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_set_user_creation_site(self):

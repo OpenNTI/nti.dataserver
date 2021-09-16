@@ -8,8 +8,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from collections import OrderedDict
-
 import os
 import math
 import time
@@ -97,18 +95,21 @@ def _token(signature):
     return int(hashlib.sha1(bytes_(signature)).hexdigest(), 16) % (10 ** 8)
 
 
-def _signature_and_token(username, email, secret_key):
+def _signature_and_token(username, email, secret_key, legacy_payload=False):
     s = SignatureSerializer(secret_key)
 
     # Ensure serialization is identical across boxes in an env so email
     # verification can't fail b/c it is processed on a box other than the
     # one that sent the email.
-    signature = s.dumps(OrderedDict([('username', username), ('email', email)]))
+    payload = {'email': email, 'username': username} if legacy_payload \
+              else [('username', username), ('email', email)]
+    signature = s.dumps(payload)
     token = _token(signature)
     return signature, token
 
 
-def generate_mail_verification_pair(user, email=None, secret_key=None):
+def generate_mail_verification_pair(user, email=None, secret_key=None,
+                                    legacy_payload=False):
     __traceback_info__ = user, email  # pylint: disable=unused-variable
     user = get_user(user)
     if user is None:
@@ -126,7 +127,8 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
         uid = intids.getId(user)
         secret_key = text_(uid)
 
-    result = _signature_and_token(username, email, secret_key)
+    result = _signature_and_token(username, email, secret_key,
+                                  legacy_payload=legacy_payload)
     return result
 
 
@@ -152,6 +154,9 @@ def get_verification_signature_data(user, signature, params=None,
     s = SignatureSerializer(secret_key)
     data = s.loads(signature)
 
+    if isinstance(data, list):
+        data = dict(data)
+
     if data['username'] != username:
         raise ValueError("Invalid token user")
 
@@ -161,7 +166,8 @@ def get_verification_signature_data(user, signature, params=None,
 
 
 def generate_verification_email_url(user, request=None, host_url=None,
-                                    email=None, secret_key=None):
+                                    email=None, secret_key=None,
+                                    legacy_payload=False):
     try:
         ds2 = request.path_info_peek() if request else "/dataserver2"
     except AttributeError:
@@ -174,7 +180,8 @@ def generate_verification_email_url(user, request=None, host_url=None,
 
     signature, token = generate_mail_verification_pair(user=user,
                                                        email=email,
-                                                       secret_key=secret_key)
+                                                       secret_key=secret_key,
+                                                       legacy_payload=legacy_payload)
     params = urllib_parse.urlencode({'username': user.username.lower(),
                                      'signature': signature})
 

@@ -212,14 +212,18 @@ class VerifyUserEmailWithTokenView(AbstractAuthenticatedView,
 
         sig, computed = generate_mail_verification_pair(self.remoteUser)
         if token != computed:
-            # pylint: disable=unused-variable
-            __traceback_info__ = sig, computed
-            raise_error(self.request,
-                        hexc.HTTPUnprocessableEntity,
-                        {
-                            'message': _(u"Wrong token."),
-                        },
-                        None)
+            legacy_sig, legacy_computed = \
+                generate_mail_verification_pair(self.remoteUser,
+                                                legacy_payload=True)
+            if token != legacy_computed:
+                # pylint: disable=unused-variable
+                __traceback_info__ = sig, computed, legacy_sig, legacy_computed
+                raise_error(self.request,
+                            hexc.HTTPUnprocessableEntity,
+                            {
+                                'message': _(u"Wrong token."),
+                            },
+                            None)
 
         IUserProfile(self.remoteUser).email_verified = True
         reindex_email_verification(self.remoteUser)

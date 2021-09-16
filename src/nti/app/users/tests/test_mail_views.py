@@ -46,6 +46,10 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
 
         signature, _ = generate_mail_verification_pair(user, None,
                                                        secret_key='zangetsu')
+        legacy_signature, _ = \
+            generate_mail_verification_pair(user, None, secret_key='zangetsu',
+                                            legacy_payload=True)
+        # Since the payload is no longer a mapping, this applies only to legacy:
         # Note that we do not test the exact return values of signature and token.
         # They are dependent upon hash values, which may change from version
         # to version or impl to impl, or even run-to-run if the PYTHONHASHSEED
@@ -56,6 +60,8 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
         # to decode the signature)
         # default - 'eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImljaGlnbyIsImVtYWlsIjoiaWNoaWdvQGJsZWFjaC5vcmcifQ.xvJVEzsqnQwcpPncSxjd_6rah0W2-fjp7_ShTVqM6h_-XVjgusYgEs5i3g0osoUkqAp84lzZZJZDPObNnFGIdA'
         for sig in (signature,
+                    'eyJhbGciOiJIUzUxMiJ9.W1sidXNlcm5hbWUiLCJpY2hpZ28iXSxbImVtYWlsIiwiaWNoaWdvQGJsZWFjaC5vcmciXV0.laTL2Y-nnx83dfh0XAp-ylmTQBAGzwZVJBqgkhuyGcDFV0ewoTeOtaGw6T1yzuSsK9DFuEzKQp3cSGzpE8Vmmg',
+                    legacy_signature,
                     'eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImljaGlnbyIsImVtYWlsIjoiaWNoaWdvQGJsZWFjaC5vcmcifQ.xvJVEzsqnQwcpPncSxjd_6rah0W2-fjp7_ShTVqM6h_-XVjgusYgEs5i3g0osoUkqAp84lzZZJZDPObNnFGIdA',
                     'eyJhbGciOiJIUzUxMiJ9.eyJlbWFpbCI6ImljaGlnb0BibGVhY2gub3JnIiwidXNlcm5hbWUiOiJpY2hpZ28ifQ.l8Us0zxJU-9keq9vIR2TIcICKBHjwTLoT_KZv6eK9jzBkvHx9DRpuDqlqiC-0cpClxfN9AS6OkmKVZ6At46pyg'):
             data = get_verification_signature_data(user, sig,
@@ -68,6 +74,13 @@ class TestMailViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_verify_user_email_with_token(self):
+        self._check_verify_user_email_with_token(legacy_payload=False)
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_verify_user_email_with_token_legacy(self):
+        self._check_verify_user_email_with_token(legacy_payload=True)
+
+    def _check_verify_user_email_with_token(self, legacy_payload=False):
         email = username = u'ichigo@bleach.org'
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.create_user(username=username, password=u'temp001',
@@ -89,12 +102,19 @@ class TestMailViews(ApplicationLayerTest):
 
     @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
     def test_verify_user_email_view(self):
+        self._check_verify_user_email_view(legacy_payload=False)
+
+    @WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+    def test_verify_user_email_view_legacy(self):
+        self._check_verify_user_email_view(legacy_payload=True)
+
+    def _check_verify_user_email_view(self, legacy_payload=False):
         email = username = u'ichigo@bleach.org'
         with mock_dataserver.mock_db_trans(self.ds):
             user = User.create_user(username=username, password=u'temp001',
                                     external_value={u'email': email})
 
-            href, _, = generate_verification_email_url(user)
+            href, _, = generate_verification_email_url(user, legacy_payload=legacy_payload)
 
         extra_environ = self._make_extra_environ(user=username)
         result = self.testapp.get(href, extra_environ=extra_environ,
