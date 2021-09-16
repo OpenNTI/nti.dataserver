@@ -101,8 +101,9 @@ def _signature_and_token(username, email, secret_key, legacy_payload=False):
     # Ensure serialization is identical across boxes in an env so email
     # verification can't fail b/c it is processed on a box other than the
     # one that sent the email.
-    payload = {'email': email, 'username': username} if legacy_payload \
-              else [('username', username), ('email', email)]
+    payload =  [('username', username), ('email', email)]
+    if legacy_payload:
+        payload = dict(payload)
     signature = s.dumps(payload)
     token = _token(signature)
     return signature, token
