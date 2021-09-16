@@ -95,14 +95,33 @@ def _token(signature):
     return int(hashlib.sha1(bytes_(signature)).hexdigest(), 16) % (10 ** 8)
 
 
-def _signature_and_token(username, email, secret_key):
+def _signature_and_token(username, email, secret_key, legacy_payload=False):
     s = SignatureSerializer(secret_key)
-    signature = s.dumps({'email': email, 'username': username})
+
+    # Ensure serialization is identical across boxes in an env so email
+    # verification can't fail b/c it is processed on a box other than the
+    # one that sent the email.
+    payload =  [('username', username), ('email', email)]
+    if legacy_payload:
+        payload = dict(payload)
+    signature = s.dumps(payload)
     token = _token(signature)
     return signature, token
 
 
 def generate_mail_verification_pair(user, email=None, secret_key=None):
+    return _generate_mail_verification_pair(user, email=email,
+                                            secret_key=secret_key)
+
+
+def generate_legacy_mail_verification_pair(user, email=None, secret_key=None):
+    return _generate_mail_verification_pair(user, email=email,
+                                            secret_key=secret_key,
+                                            legacy_payload=True)
+
+
+def _generate_mail_verification_pair(user, email=None, secret_key=None,
+                                     legacy_payload=False):
     __traceback_info__ = user, email  # pylint: disable=unused-variable
     user = get_user(user)
     if user is None:
@@ -120,7 +139,8 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
         uid = intids.getId(user)
         secret_key = text_(uid)
 
-    result = _signature_and_token(username, email, secret_key)
+    result = _signature_and_token(username, email, secret_key,
+                                  legacy_payload=legacy_payload)
     return result
 
 
@@ -145,6 +165,9 @@ def get_verification_signature_data(user, signature, params=None,
 
     s = SignatureSerializer(secret_key)
     data = s.loads(signature)
+
+    if isinstance(data, list):
+        data = dict(data)
 
     if data['username'] != username:
         raise ValueError("Invalid token user")

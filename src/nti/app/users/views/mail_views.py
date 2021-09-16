@@ -48,6 +48,7 @@ from nti.app.users.utils import get_email_verification_time
 from nti.app.users.utils import safe_send_email_verification
 from nti.app.users.utils import generate_mail_verification_pair
 from nti.app.users.utils import get_verification_signature_data
+from nti.app.users.utils import generate_legacy_mail_verification_pair
 
 from nti.appserver.interfaces import IApplicationSettings
 
@@ -212,14 +213,17 @@ class VerifyUserEmailWithTokenView(AbstractAuthenticatedView,
 
         sig, computed = generate_mail_verification_pair(self.remoteUser)
         if token != computed:
-            # pylint: disable=unused-variable
-            __traceback_info__ = sig, computed
-            raise_error(self.request,
-                        hexc.HTTPUnprocessableEntity,
-                        {
-                            'message': _(u"Wrong token."),
-                        },
-                        None)
+            legacy_sig, legacy_computed = \
+                generate_legacy_mail_verification_pair(self.remoteUser)
+            if token != legacy_computed:
+                # pylint: disable=unused-variable
+                __traceback_info__ = sig, computed, legacy_sig, legacy_computed
+                raise_error(self.request,
+                            hexc.HTTPUnprocessableEntity,
+                            {
+                                'message': _(u"Wrong token."),
+                            },
+                            None)
 
         IUserProfile(self.remoteUser).email_verified = True
         reindex_email_verification(self.remoteUser)
