@@ -299,7 +299,6 @@ class TestUserProfile(DataserverLayerTest):
 
         prof.addresses = {'mailing': mailing_address}
         user_prof = to_external_object(user, name=('personal-summary'))
-
         assert_that(user_prof,
                     has_entry('addresses',
                               has_entry('mailing', has_entries('MimeType', 'application/vnd.nextthought.users.address',
@@ -310,7 +309,7 @@ class TestUserProfile(DataserverLayerTest):
                                                                'full_name', 'Kurosaki Ichigo',
                                                                'street_address_1', 'Kurosaki Clinic',))))
 
-        # mailing address
+        # update mailing address
         ext_prof = user_prof['addresses']['mailing']
         factory = internalization.find_factory_for(ext_prof)
         assert_that(factory, is_(not_none()))
@@ -321,6 +320,17 @@ class TestUserProfile(DataserverLayerTest):
         assert_that(new_io, has_property('country', is_('Japan')))
         assert_that(new_io, has_property('street_address_2', is_(u'クロサキ医院')))
         assert_that(new_io, is_(Address))
+        
+        # Update user with new address
+        prof.addresses = None
+        ext_addresses = to_external_object(user_prof['addresses'])
+        internalization.update_from_external_object(user, 
+                                                    {"addresses": ext_addresses})
+        assert_that(prof.addresses, has_length(1))
+        addr = prof.addresses.values()[0]
+        assert_that(addr, has_property('city', 'Karakura Town'))
+        assert_that(addr, has_property('country', is_('Japan')))
+        assert_that(addr, has_property('street_address_2', is_(u'クロサキ医院')))
 
 
 from nti.dataserver.users.user_profile import FriendlyNamed
