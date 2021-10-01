@@ -344,7 +344,7 @@ class User(Principal):
                         factory = find_factory_for(addr_val)
                         address = factory()
                         update_from_external_object(address, addr_val, notify=False)
-                    except:
+                    except Exception:
                         # If we err at all, replace with what we have and let
                         # the full internalization flow handle it
                         address = addr_val
