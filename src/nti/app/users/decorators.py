@@ -12,6 +12,8 @@ import base64
 
 from pyramid.interfaces import IRequest
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 from zope import interface
 
@@ -365,3 +367,21 @@ class _AuthTokenEncodedTokenDecorator(AbstractAuthenticatedRequestAwareDecorator
     def _do_decorate_external(self, context, result):
         encoded_token = base64.b64encode('%s:%s' % (self.remoteUser.username, context.token))
         result['EncodedToken'] = encoded_token
+
+
+@component.adapter(IUser, IRequest)
+@interface.implementer(IExternalMappingDecorator)
+class _UserDisplayNameDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _display_name(self, context):
+        display_name_generator = component.queryMultiAdapter((context, self.request),
+                                                             IDisplayNameGenerator)
+        if display_name_generator is None:
+            return context.username
+
+        return display_name_generator()
+
+    def _do_decorate_external(self, context, result):
+        display_name = self._display_name(context)
+        if display_name:
+            result['DisplayName'] = display_name

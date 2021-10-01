@@ -91,6 +91,11 @@
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest"/>
 
+	<subscriber factory=".decorators._UserDisplayNameDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest"/>
+
 	<!-- Communities -->
     <adapter factory=".zope_security.PersistentCommunityPrincipalRoleManager"
              provides="nti.dataserver.interfaces.ICommunityPrincipalRoleManager"

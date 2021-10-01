@@ -30,6 +30,8 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
+from nti.app.site.hostpolicy import create_site
+
 from nti.app.users.utils import set_user_creation_site
 
 from nti.dataserver.tests import mock_dataserver
@@ -146,3 +148,39 @@ class TestListViews(ApplicationLayerTest):
         assert_that(res.body, does_not(contains_string('ichigo@bleach.com')))
         assert_that(res.body, contains_string('ukia@bleach.com'))
         assert_that(res.body, does_not(contains_string('steve@nt.com')))
+
+    @WithSharedApplicationMockDS(users=('hatter',),
+                                 testapp=True,
+                                 default_authenticate=True)
+    @fudge.patch('nti.app.users.views.list_views.get_component_hierarchy_names')
+    def test_display_name_decoration(self, mock_sites):
+        mock_sites.is_callable().returns(("list_users_test",))
+
+        with mock_dataserver.mock_db_trans(self.ds):
+            create_site('list_users_test')
+
+        with mock_dataserver.mock_db_trans(self.ds, site_name='list_users_test'):
+            user = self._create_user(username=u'tweedle.dee',
+                                     external_value={'email': u"tweedle.d@nt.com",
+                                                     'realname': u'Tweedle Dee',
+                                                     'alias': u'Dee'})
+            set_user_creation_site(user, "list_users_test")
+            lifecycleevent.modified(user)
+
+            user = self._create_user(username=u'tweedle.dum',
+                                     external_value={'email': u"tweedle.dum@nt.com",
+                                                     'realname': u'Tweedle Dum'})
+            set_user_creation_site(user, "list_users_test")
+            lifecycleevent.modified(user)
+
+            user = self._get_user(u'hatter')
+            set_user_creation_site(user, "list_users_test")
+            lifecycleevent.modified(user)
+
+        url = '/dataserver2/users/@@site_users'
+        params = {"site": 'list_users_test', 'sortOn': 'displayname'}
+        res = self.testapp.get(url, params, status=200).json_body
+
+        assert_that(res['Items'][0]['DisplayName'], is_('Dee'))
+        assert_that(res['Items'][1]['DisplayName'], is_('hatter'))
+        assert_that(res['Items'][2]['DisplayName'], is_('Tweedle Dum'))
