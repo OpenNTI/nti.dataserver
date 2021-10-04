@@ -485,7 +485,7 @@ class IAddress(Interface):
     postal_code = ValidTextLine(title=u"Postal code",
                                 required=False, max_length=30)
 
-    country = ValidTextLine(title=u"Nation name", required=True)
+    country = ValidTextLine(title=u"Country", required=True)
 
 
 class IUserContactProfile(Interface):
