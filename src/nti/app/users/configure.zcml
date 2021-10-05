@@ -91,9 +91,9 @@
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest"/>
 
-	<subscriber factory=".decorators._UserDisplayNameDecorator"
+	<subscriber factory=".decorators._EntityDisplayNameDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.interfaces.IUser
+				for="nti.dataserver.interfaces.IEntity
 					 pyramid.interfaces.IRequest"/>
 
 	<!-- Communities -->

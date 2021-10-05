@@ -41,6 +41,7 @@ from nti.appserver.account_recovery_views import REL_ADMIN_TRIGGERED_PASSCODE_RE
 from nti.coremetadata.interfaces import IDeactivatedUser
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
+from nti.coremetadata.interfaces import IEntity
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_DELETE
@@ -369,9 +370,9 @@ class _AuthTokenEncodedTokenDecorator(AbstractAuthenticatedRequestAwareDecorator
         result['EncodedToken'] = encoded_token
 
 
-@component.adapter(IUser, IRequest)
+@component.adapter(IEntity, IRequest)
 @interface.implementer(IExternalMappingDecorator)
-class _UserDisplayNameDecorator(AbstractAuthenticatedRequestAwareDecorator):
+class _EntityDisplayNameDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _display_name(self, context):
         display_name_generator = component.queryMultiAdapter((context, self.request),

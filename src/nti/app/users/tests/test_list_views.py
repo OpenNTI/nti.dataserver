@@ -36,6 +36,8 @@ from nti.app.users.utils import set_user_creation_site
 
 from nti.dataserver.tests import mock_dataserver
 
+from nti.dataserver.users.interfaces import IFriendlyNamed
+
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
@@ -149,6 +151,21 @@ class TestListViews(ApplicationLayerTest):
         assert_that(res.body, contains_string('ukia@bleach.com'))
         assert_that(res.body, does_not(contains_string('steve@nt.com')))
 
+    def _create_group(self, username, dfl_name, extra_environ=None):
+        params = {
+            "MimeType": "application/vnd.nextthought.dynamicfriendslist",
+            "Username": dfl_name,
+            "alias": "mygroup",
+            "friends": [],
+            "IsDynamicSharing": True
+        }
+        extra_environ_kwargs = extra_environ if extra_environ else {}
+        url = '/dataserver2/users/%s/Groups' % username
+        user_env = self._make_extra_environ(username=username, **extra_environ_kwargs)
+        result = self.testapp.post_json(url, params=params, status=201,
+                                        extra_environ=user_env).json_body
+        return result
+
     @WithSharedApplicationMockDS(users=('hatter',),
                                  testapp=True,
                                  default_authenticate=True)
@@ -162,8 +179,8 @@ class TestListViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds, site_name='list_users_test'):
             user = self._create_user(username=u'tweedle.dee',
                                      external_value={'email': u"tweedle.d@nt.com",
-                                                     'realname': u'Tweedle Dee',
-                                                     'alias': u'Dee'})
+                                                     'realname': u'Tweedle Dee'})
+            IFriendlyNamed(user).alias = u'Dee'
             set_user_creation_site(user, "list_users_test")
             lifecycleevent.modified(user)
 
@@ -176,6 +193,12 @@ class TestListViews(ApplicationLayerTest):
             user = self._get_user(u'hatter')
             set_user_creation_site(user, "list_users_test")
             lifecycleevent.modified(user)
+
+        # If no current IDisplayNameGenerator registered, fallback to username (e.g. DFLs)
+        res = self._create_group(u'hatter',
+                                 u'hatters-dfl',
+                                 extra_environ={b'HTTP_ORIGIN': b'http://list_users_test'})
+        assert_that(res, has_entry('DisplayName', u'hatters-dfl'))
 
         url = '/dataserver2/users/@@site_users'
         params = {"site": 'list_users_test', 'sortOn': 'displayname'}
