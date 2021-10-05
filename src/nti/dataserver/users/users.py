@@ -61,7 +61,6 @@ from nti.dataserver.interfaces import StreamChangeAcceptedByUser
 
 from nti.dataserver.users.entity import get_shared_dataserver
 
-from nti.dataserver.users.interfaces import IAddress
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IDoNotValidateProfile
 from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPassword
@@ -70,9 +69,6 @@ from nti.dataserver.users.principal import Principal
 
 from nti.datastructures.datastructures import ContainedStorage
 from nti.datastructures.datastructures import AbstractNamedLastModifiedBTreeContainer
-
-from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids import ntiids
 
@@ -331,27 +327,6 @@ class User(Principal):
     updateLastSeenTime = update_last_seen_time
 
     def updateFromExternalObject(self, parsed, *args, **kwargs):
-        # XXX: We cannot internalize this correctly for some reason.
-        # Therefore, manualy build our Address objects here as we are
-        # internalizing.
-        incoming_addresses = parsed.get('addresses') or {}
-        if incoming_addresses:
-            replaced_addrs = {}
-            for addr_key, addr_val in incoming_addresses.items():
-                address = addr_val
-                if not IAddress.providedBy(addr_val):
-                    try:
-                        factory = find_factory_for(addr_val)
-                        address = factory()
-                        update_from_external_object(address, addr_val, notify=False)
-                    except Exception:
-                        # If we err at all, replace with what we have and let
-                        # the full internalization flow handle it
-                        address = addr_val
-                        pass
-                replaced_addrs[addr_key] = address
-            parsed['addresses'] = replaced_addrs
-        
         profile = IUserProfile(self, None)
         bounced_email_update =  getattr(profile, 'email_verified', True) == False \
                             and parsed and len(parsed) == 1 and 'email' in parsed

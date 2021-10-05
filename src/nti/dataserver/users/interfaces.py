@@ -62,7 +62,7 @@ from nti.i18n.locales.interfaces import ICcTLDInformation
 
 from nti.mailer.interfaces import IEmailAddressable
 
-from nti.schema.field import Int
+from nti.schema.field import Int 
 from nti.schema.field import Bool
 from nti.schema.field import Date
 from nti.schema.field import Dict
@@ -76,6 +76,7 @@ from nti.schema.field import ValidTextLine
 from nti.schema.field import ValidURI
 from nti.schema.field import ValidBytesLine
 from nti.schema.field import ValidDatetime
+from nti.schema.field import DictFromObject
 from nti.schema.field import DecodingValidTextLine
 
 from nti.schema.interfaces import InvalidValue
@@ -490,11 +491,11 @@ class IAddress(Interface):
 
 class IUserContactProfile(Interface):
 
-    addresses = Dict(title=u"A mapping of address objects.",
-                     key_type=DecodingValidTextLine(title=u"Adresss key"),
-                     value_type=Object(IAddress),
-                     min_length=0,
-                     required=False)
+    addresses = DictFromObject(title=u"A mapping of address objects.",
+                               key_type=DecodingValidTextLine(title=u"Adresss key"),
+                               value_type=Object(IAddress),
+                               min_length=0,
+                               required=False)
 
     phones = Dict(title=u"A mapping of address objects.",
                   key_type=DecodingValidTextLine(title=u"Phone key"),

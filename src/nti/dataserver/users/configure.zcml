@@ -30,6 +30,11 @@
     <subscriber handler=".subscribers._reindex_invalid_email" />
     <subscriber handler=".subscribers._community_blurred_avatar" />
 
+    <!-- Internalization -->
+    <adapter factory=".user_profile.dict_to_address"
+             for="dict"
+             provides=".interfaces.IAddress" />
+
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"
 			 name="summary" />
