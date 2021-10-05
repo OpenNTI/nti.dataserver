@@ -12,6 +12,8 @@ import base64
 
 from pyramid.interfaces import IRequest
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 from zope import component
 from zope import interface
 
@@ -39,6 +41,7 @@ from nti.appserver.account_recovery_views import REL_ADMIN_TRIGGERED_PASSCODE_RE
 from nti.coremetadata.interfaces import IDeactivatedUser
 from nti.coremetadata.interfaces import IDeactivatedCommunity
 from nti.coremetadata.interfaces import IDeleteLockedCommunity
+from nti.coremetadata.interfaces import IEntity
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_DELETE
@@ -365,3 +368,21 @@ class _AuthTokenEncodedTokenDecorator(AbstractAuthenticatedRequestAwareDecorator
     def _do_decorate_external(self, context, result):
         encoded_token = base64.b64encode('%s:%s' % (self.remoteUser.username, context.token))
         result['EncodedToken'] = encoded_token
+
+
+@component.adapter(IEntity, IRequest)
+@interface.implementer(IExternalMappingDecorator)
+class _EntityDisplayNameDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _display_name(self, context):
+        display_name_generator = component.queryMultiAdapter((context, self.request),
+                                                             IDisplayNameGenerator)
+        if display_name_generator is None:
+            return context.username
+
+        return display_name_generator()
+
+    def _do_decorate_external(self, context, result):
+        display_name = self._display_name(context)
+        if display_name:
+            result['DisplayName'] = display_name
