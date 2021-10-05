@@ -39,7 +39,7 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import INote
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.namedfile.constraints import FileConstraints
 

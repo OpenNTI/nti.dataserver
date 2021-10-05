@@ -1481,7 +1481,7 @@ class AbstractReadableSharedMixin(object):
     sharingTargetNames = property(getSharingTargetNames)
 
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 
 class AbstractReadableSharedWithMixin(AbstractReadableSharedMixin):

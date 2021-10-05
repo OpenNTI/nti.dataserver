@@ -39,7 +39,7 @@ from nti.dataserver.users.entity import Entity
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import StandardInternalFields

@@ -92,7 +92,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.site.site import get_site_for_site_names
 

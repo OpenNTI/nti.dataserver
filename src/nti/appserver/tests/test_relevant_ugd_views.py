@@ -20,7 +20,7 @@ from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Redaction
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.ntiids.ntiids import make_ntiid
 

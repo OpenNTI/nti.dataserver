@@ -53,7 +53,7 @@ from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IBackgroundURL
 from nti.dataserver.users.interfaces import IBlurredAvatarURL
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.property import dataurl
 

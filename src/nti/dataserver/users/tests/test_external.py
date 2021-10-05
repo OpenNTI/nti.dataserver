@@ -17,10 +17,10 @@ from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
 from nti.dataserver.users.auto_subscribe import SiteAutoSubscribeMembershipPredicate
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 
 class TestExternal(unittest.TestCase):

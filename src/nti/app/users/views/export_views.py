@@ -42,7 +42,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.users import User
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 from nti.externalization.externalization import NonExternalizableObjectError
 
 from nti.externalization.interfaces import LocatedExternalDict

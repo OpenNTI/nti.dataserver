@@ -78,13 +78,13 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import get_users_by_site
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.identifiers.utils import get_external_identifiers
 

@@ -28,7 +28,7 @@ from nti.chatserver.interfaces import IPresenceInfo
 from nti.externalization.externalization import toExternalObject
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
 

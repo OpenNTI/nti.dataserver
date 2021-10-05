@@ -110,7 +110,7 @@ from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from nti.dataserver.interfaces import IDataserverFolder
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
 

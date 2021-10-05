@@ -73,7 +73,7 @@ from nti.dataserver.users.utils import intids_of_users_by_site
 from nti.dataserver.users.utils import intids_of_community_members
 from nti.dataserver.users.utils import get_communities_by_site
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
 

@@ -42,7 +42,7 @@ from nti.contentfile.model import transform_to_blob
 
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.namedfile.file import get_file_name as get_context_name
 

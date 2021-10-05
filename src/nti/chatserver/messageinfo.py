@@ -42,11 +42,11 @@ from nti.dataserver.users.entity import Entity
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import IClassObjectFactory
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.proxy import removeAllProxies
 

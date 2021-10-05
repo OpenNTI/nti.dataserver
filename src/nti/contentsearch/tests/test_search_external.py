@@ -27,10 +27,10 @@ from nti.contentsearch.search_query import DateTimeRange
 from nti.contentsearch.search_results import SearchResults
 from nti.contentsearch.search_results import SuggestResults
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 

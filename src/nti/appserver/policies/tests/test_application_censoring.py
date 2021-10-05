@@ -31,7 +31,7 @@ from nti.contentrange import contentrange
 
 from nti.dataserver import contenttypes
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.ntiids.oids import to_external_ntiid_oid
 

@@ -38,7 +38,7 @@ from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IFavoritable
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 

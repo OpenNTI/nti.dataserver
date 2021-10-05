@@ -90,8 +90,8 @@ from nti.dataserver.users.users import User
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import to_external_object
+from nti.externalization import update_from_external_object
 
 from nti.intid import wref as intid_wref
 

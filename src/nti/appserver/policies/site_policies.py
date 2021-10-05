@@ -100,7 +100,7 @@ from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IWillUpdateNewEntityEvent
 from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import IExternalObjectDecorator
 

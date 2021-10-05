@@ -22,10 +22,10 @@ from nti.chatserver.messageinfo import MessageInfoFactory
 
 from nti.dataserver.contenttypes import Canvas
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.dataserver.interfaces import IModeledContent
 

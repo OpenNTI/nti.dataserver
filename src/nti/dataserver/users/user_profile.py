@@ -56,7 +56,7 @@ from nti.dataserver.users.utils import AvatarUrlProperty as _AvatarUrlProperty
 from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgroundUrlProperty
 from nti.dataserver.users.utils import BlurredAvatarUrlProperty as _BlurredAvatarUrlProperty
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.representation import WithRepr
 

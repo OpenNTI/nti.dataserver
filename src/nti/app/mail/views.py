@@ -38,7 +38,7 @@ from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable

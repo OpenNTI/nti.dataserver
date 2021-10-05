@@ -56,7 +56,7 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.ntiids import ntiids
 

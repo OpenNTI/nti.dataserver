@@ -38,7 +38,7 @@ from nti.dataserver.users.missing_user import MissingUser
 
 from nti.dataserver.users.users import User
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.wref.interfaces import IWeakRef
 from nti.wref.interfaces import ICachingWeakRef

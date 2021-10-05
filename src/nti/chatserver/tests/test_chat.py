@@ -94,7 +94,7 @@ from nti.externalization.externalization import EXT_FORMAT_JSON
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import NonExternalizableObjectError
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.representation import to_external_representation
 from nti.externalization.representation import to_json_representation_externalized

@@ -31,7 +31,7 @@ from nti.contentfile.interfaces import IContentBaseFile
 
 from nti.dataserver import authorization as nauth
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields

@@ -43,7 +43,7 @@ from nti.dataserver.interfaces import IAuthorizationPolicy
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.persistence import NoPickle 
 
