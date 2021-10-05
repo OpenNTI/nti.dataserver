@@ -56,6 +56,8 @@ from nti.dataserver.users.utils import AvatarUrlProperty as _AvatarUrlProperty
 from nti.dataserver.users.utils import BackgroundUrlProperty as _BackgroundUrlProperty
 from nti.dataserver.users.utils import BlurredAvatarUrlProperty as _BlurredAvatarUrlProperty
 
+from nti.externalization.internalization import update_from_external_object
+
 from nti.externalization.representation import WithRepr
 
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -326,6 +328,14 @@ class Address(SchemaConfigured, Persistent):
     state = FP(IAddress['state'])
     postal_code = FP(IAddress['postal_code'])
     country = FP(IAddress['country'])
+
+
+@interface.implementer(IAddress)
+@component.adapter(dict)
+def dict_to_address(addr_dict):
+    new_addr = Address()
+    update_from_external_object(new_addr, addr_dict)
+    return new_addr
 
 
 @WithRepr
