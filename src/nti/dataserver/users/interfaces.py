@@ -477,9 +477,9 @@ class IAddress(Interface):
     street_address_2 = ValidTextLine(title=u"Street line 2",
                                      required=False, max_length=75)
 
-    city = ValidTextLine(title=u"City name", required=True)
+    city = ValidTextLine(title=u"City", required=True)
 
-    state = ValidTextLine(title=u"State name",
+    state = ValidTextLine(title=u"State",
                           required=False, max_length=10)
 
     postal_code = ValidTextLine(title=u"Postal code",
