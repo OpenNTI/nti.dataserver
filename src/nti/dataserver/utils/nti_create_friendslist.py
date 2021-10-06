@@ -27,7 +27,7 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 logger = __import__('logging').getLogger(__name__)
 

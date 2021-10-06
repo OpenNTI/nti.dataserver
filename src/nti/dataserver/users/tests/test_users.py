@@ -91,9 +91,9 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.users.users import _FriendsListMap as FriendsListContainer
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.persistence import getPersistentState
 

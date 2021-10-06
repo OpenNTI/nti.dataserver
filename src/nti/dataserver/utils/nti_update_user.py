@@ -37,8 +37,8 @@ from nti.dataserver.utils import run_with_dataserver
 
 from nti.dataserver.utils.base_script import set_site
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import to_external_object
+from nti.externalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
 

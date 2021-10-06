@@ -27,7 +27,7 @@ from nti.contentrange.tests import ConfiguringTestBase
 
 from nti.externalization.externalization import toExternalObject
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
 

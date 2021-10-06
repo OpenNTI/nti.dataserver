@@ -111,7 +111,7 @@ from nti.dataserver.users.users import User
 
 from nti.externalization import update_from_external_object
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList

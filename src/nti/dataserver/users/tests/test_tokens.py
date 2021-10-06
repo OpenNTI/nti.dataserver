@@ -29,7 +29,7 @@ from nti.dataserver.users.users import User
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 
 class TestUserTokens(unittest.TestCase):

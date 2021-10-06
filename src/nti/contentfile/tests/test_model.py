@@ -46,7 +46,7 @@ from nti.contentfile.model import transform_to_blob
 from nti.contentfile.tests import SharedConfiguringTestLayer
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
 

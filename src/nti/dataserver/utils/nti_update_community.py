@@ -30,8 +30,8 @@ from nti.dataserver.users.interfaces import IDisallowActivityLink
 
 from nti.dataserver.utils import run_with_dataserver
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import to_external_object
+from nti.externalization import update_from_external_object
 
 logger = __import__('logging').getLogger(__name__)
 

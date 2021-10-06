@@ -50,8 +50,8 @@ from nti.dataserver.users.friends_lists import DynamicFriendsList
 
 from nti.dataserver.users.users import User
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import to_external_object
+from nti.externalization import update_from_external_object
 
 from nti.ntiids.oids import to_external_ntiid_oid
 

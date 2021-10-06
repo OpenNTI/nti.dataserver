@@ -251,7 +251,7 @@ def _exception_to_event( the_error ):
 _registered_legacy_search_mods = set()
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from .interfaces import SocketSessionCreatedObjectEvent
 

@@ -68,7 +68,7 @@ from nti.dataserver.users.users import User
 
 from nti.dataserver.users.utils import reindex_email_verification
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 MAX_REQUEST_COUNT = 5
 

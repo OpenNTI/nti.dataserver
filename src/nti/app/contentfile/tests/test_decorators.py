@@ -31,10 +31,10 @@ from nti.app.contentfile.view_mixins import to_external_download_oid_href
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.tests import externalizes
 

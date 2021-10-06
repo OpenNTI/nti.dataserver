@@ -55,7 +55,7 @@ from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.singleton import Singleton
 

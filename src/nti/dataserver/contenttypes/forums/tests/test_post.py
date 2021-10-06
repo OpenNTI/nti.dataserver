@@ -33,7 +33,7 @@ from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization import internalization
 from nti.externalization.tests import externalizes
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost, IPersonalBlogComment, ITopic
 from nti.dataserver.contenttypes.forums.post import Post, PersonalBlogComment, PersonalBlogEntryPost

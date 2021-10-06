@@ -40,7 +40,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IGlobalFlagStorage
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 

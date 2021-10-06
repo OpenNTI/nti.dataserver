@@ -28,7 +28,7 @@ from nti.dataserver.interfaces import IDataserver
 from nti.externalization.interfaces import IExternalRepresentationReader
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.mimetype.mimetype import nti_mimetype_class
 

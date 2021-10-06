@@ -20,7 +20,7 @@ from nti.appserver.workspaces.interfaces import ICatalogCollection
 
 from nti.dataserver import authorization as nauth
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import StandardExternalFields
 

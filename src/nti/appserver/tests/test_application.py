@@ -105,7 +105,7 @@ from nti.dataserver.users.tokens import UserToken
 from nti.dataserver.users.user_profile import Education
 from nti.dataserver.users.user_profile import ProfessionalPosition
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.representation import to_json_representation
 

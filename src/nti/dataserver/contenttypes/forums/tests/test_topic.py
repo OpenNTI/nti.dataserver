@@ -43,7 +43,7 @@ from ExtensionClass import Base
 
 from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.dataserver.interfaces import IUser, IWritableShared, IPrincipal
 

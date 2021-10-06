@@ -27,8 +27,8 @@ from nti.dataserver.contenttypes import Note as _Note
 from nti.dataserver.interfaces import IThreadable
 from nti.dataserver.interfaces import IInspectableWeakThreadable
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import to_external_object
+from nti.externalization import update_from_external_object
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest

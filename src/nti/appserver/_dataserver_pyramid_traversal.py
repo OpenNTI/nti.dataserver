@@ -62,7 +62,7 @@ from nti.dataserver.interfaces import IHomogeneousTypeContainer
 from nti.dataserver.interfaces import ISimpleEnclosureContainer
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields

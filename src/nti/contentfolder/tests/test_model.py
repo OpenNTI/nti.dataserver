@@ -26,10 +26,10 @@ from nti.contentfolder.interfaces import IContentFolder
 from nti.contentfolder.model import RootFolder
 from nti.contentfolder.model import ContentFolder
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.externalization.internalization import find_factory_for
-from nti.externalization.internalization import update_from_external_object
+from nti.externalization import update_from_external_object
 
 from nti.namedfile.file import NamedBlobFile as NamedFile
 

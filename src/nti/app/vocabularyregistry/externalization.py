@@ -14,7 +14,7 @@ from zope import interface
 from zope.schema.interfaces import ITerm
 from zope.schema.interfaces import IVocabulary
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 from nti.externalization.externalization import to_standard_external_dictionary
 
 from nti.externalization.interfaces import IExternalObject

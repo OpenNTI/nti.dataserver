@@ -14,7 +14,7 @@ from hamcrest import assert_that
 
 from nti.contentprocessing.metadata_extractors import ImageMetadata
 
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.app.testing.layers import AppLayerTest
 

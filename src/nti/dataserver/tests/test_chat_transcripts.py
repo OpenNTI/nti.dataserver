@@ -48,7 +48,7 @@ from nti.dataserver import chat_transcripts
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.externalization import to_external_object
+from nti.externalization import to_external_object
 
 from nti.ntiids import oids
 
