@@ -470,23 +470,37 @@ IUserProfile = IEntityProfile  # alias for BWC
 
 class IAddress(Interface):
 
-    full_name = ValidTextLine(title=u"First name", required=True)
+    full_name = ValidTextLine(title=u"Full name", 
+                              description=u"Full name",
+                              min_length=1, 
+                              required=True)
 
     street_address_1 = ValidTextLine(title=u"Street line 1",
-                                     max_length=75, required=True)
+                                     description=u"Address 1",
+                                     max_length=75, 
+                                     required=True)
 
     street_address_2 = ValidTextLine(title=u"Street line 2",
-                                     required=False, max_length=75)
+                                     description=u"Address 2",
+                                     required=False, 
+                                     max_length=75)
 
-    city = ValidTextLine(title=u"City", required=True)
+    city = ValidTextLine(title=u"City", 
+                         description=u"City",
+                         required=True)
 
     state = ValidTextLine(title=u"State",
-                          required=False, max_length=10)
+                          description=u"State",
+                          required=False, 
+                          max_length=10)
 
     postal_code = ValidTextLine(title=u"Postal code",
+                                description=u"Postal Code",
                                 required=False, max_length=30)
 
-    country = ValidTextLine(title=u"Country", required=True)
+    country = ValidTextLine(title=u"Country", 
+                            description=u"Country",
+                            required=True)
 
 
 class IUserContactProfile(Interface):
