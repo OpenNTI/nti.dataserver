@@ -392,7 +392,7 @@ def _ext_type_resolver_for_user(remote_user):
             # Since we are already looking in the object we might as well
             # return the summary form.
             ext_type = 'personal-summary'
-        elif nauth.is_admin_or_content_admin_or_site_admin(remote_user):
+        elif nauth.is_admin_or_site_admin(remote_user):
             ext_type = 'admin-summary'
         return ext_type
 
@@ -508,6 +508,8 @@ def _make_visibility_test(remote_user, admin_filter_by_site_community=True):
     """
     # TODO: Hook this up to the ACL support
     if remote_user:
+        # XXX: Content admins can probably find all users, necessary since
+        # they may be filling in content roles.
         is_admin = nauth.is_admin_or_content_admin(remote_user)
         is_site_admin = nauth.is_site_admin(remote_user)
         site_admin_utility = component.getUtility(ISiteAdminUtility)
