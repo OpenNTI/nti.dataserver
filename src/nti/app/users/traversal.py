@@ -23,10 +23,12 @@ from zope.traversing.interfaces import IPathAdapter
 from zope.traversing.interfaces import ITraversable
 
 from nti.dataserver.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import AnonymousUser
 
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.tokens import UserTokenContainerFactory
@@ -71,3 +73,9 @@ class UserTokenContainerTraversable(object):
             return LocationProxy(token, self.context, name)
         else:
             raise LocationError(name)
+
+
+@interface.implementer(IPathAdapter)
+@component.adapter(IUser, IRequest)
+def _user_profile_path_adapter(user, unused_request=None):
+    return IUserProfile(user)

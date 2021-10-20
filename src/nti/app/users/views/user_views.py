@@ -32,6 +32,8 @@ from zope.schema import getValidationErrors
 
 from zope.interface import Invalid
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.error import validation_error_to_dict
 
@@ -45,13 +47,18 @@ from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.policies.interfaces import IRequireSetPassword
 
+from nti.appserver.pyramid_authorization import has_permission
+
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.coremetadata.interfaces import IDeactivatedEntity
 
-from nti.dataserver.authorization import ACT_UPDATE, is_admin_or_site_admin
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.authorization import is_admin
+from nti.dataserver.authorization import is_admin_or_site_admin
+
 from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import IUser
@@ -63,12 +70,15 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.entity import Entity
 
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IAccountProfileSchemafier
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
+
+from nti.externalization import to_external_object
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -230,6 +240,10 @@ class UserUpdateView(UGDPutView):
         return True
 
     def validateInput(self, source):
+        logger.info('Updating profile (%s) (user=%s) (%s)',
+                    self.remoteUser.username,
+                    self.context.username,
+                    source)
         # Assume input is valid until shown otherwise
         # Validate that startYear < endYear for education,
         # and that they are in an appropriate range
@@ -292,6 +306,67 @@ class UserUpdateView(UGDPutView):
         return True
 
 
+class _UserProfileMixin(object):
+    
+    #: The permission for this view
+    PERM = None
+    
+    @Lazy
+    def is_admin(self):
+        return is_admin(self.remoteUser)
+
+    @Lazy
+    def is_site_admin(self):
+        return is_site_admin(self.remoteUser)
+
+    @Lazy
+    def site_admin_utility(self):
+        return component.getUtility(ISiteAdminUtility)
+    
+    def get_externalizer(self, user):
+        # pylint: disable=no-member
+        result = 'summary'
+        if user == self.remoteUser:
+            result = 'personal-summary'
+        elif self.is_admin:
+            result = 'admin-summary'
+        elif    self.is_site_admin \
+            and self.site_admin_utility.can_administer_user(self.remoteUser, user):
+            result = 'admin-summary'
+        return result
+    
+    def _check_access(self, user):
+        # Need to manually check access since we do not have
+        # proper zope lineage here
+        if has_permission(self.PERM, self.context, self.request) or self.is_admin:
+            return
+        if      self.is_site_admin \
+            and self.site_admin_utility.can_administer_user(self.remoteUser,
+                                                            user):
+            return 
+        raise hexc.HTTPForbidden()
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IUserProfile,
+             request_method='GET')
+class UserProfileGetView(AbstractAuthenticatedView, _UserProfileMixin):
+    """
+    API to get a user profile (which we implement via externalizing the 
+    user object. Maybe this isn't useful since getting the user
+    retrieves this info (currently)?
+    """
+    
+    PERM = ACT_READ
+    
+    def __call__(self):
+        user = IUser(self.context)
+        self._check_access(user)
+        ext_type = self.get_externalizer(user)
+        return to_external_object(user, name=ext_type)
+    
+
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IUser,
@@ -343,8 +418,7 @@ class UserUpdatePreflightView(UserUpdateView):
     A view to preflight profile updates, returning all validation errors if any.
     """
 
-    def __call__(self):
-        user = self.context
+    def _do_call(self, user):
         result_dict = LocatedExternalDict()
         profile_iface = IUserProfileSchemaProvider(user).getSchema()
         profile = profile_iface(user)
@@ -394,6 +468,55 @@ class UserUpdatePreflightView(UserUpdateView):
             result_dict['ProfileSchema'] = IAccountProfileSchemafier(user).make_schema()
         self.request.environ['nti.commit_veto'] = 'abort'
         return result
+    
+    def __call__(self):
+        return self._do_call(self.context)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IUserProfile,
+             name='preflight',
+             request_method='PUT')
+class UserProfileUpdatePreflightView(UserUpdatePreflightView, _UserProfileMixin):
+    """
+    A view to preflight profile updates, returning all validation errors if any.
+    """
+    
+    PERM = ACT_UPDATE
+    
+    def _get_object_to_update(self):
+        return IUser(self.context)
+
+    def __call__(self):
+        user = IUser(self.context)
+        self._check_access(user)
+        return self._do_call(user)
+
+
+@view_config(route_name='objects.generic.traversal',
+             renderer='rest',
+             context=IUserProfile,
+             request_method='PUT')
+class UserProfileUpdateView(UserUpdateView, _UserProfileMixin):
+    """
+    Eventually we'd like to ensure all updates occur directly on the 
+    IUserProfile. This is a move towards that approach.
+    
+    `AdminUserUpdateView` becomes obsolete with this.
+    """
+    
+    PERM = ACT_UPDATE
+    
+    def _get_object_to_update(self):
+        return IUser(self.context)
+    
+    def __call__(self):
+        user = IUser(self.context)
+        self._check_access(user)
+        super(UserProfileUpdateView, self).__call__()
+        ext_type = self.get_externalizer(user)
+        return to_external_object(user, name=ext_type)
 
 
 @view_config(context=IUsersFolder,

@@ -8,13 +8,17 @@ from __future__ import absolute_import
 # pylint: disable=protected-access,no-member,too-many-public-methods
 
 from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import not_none
 from hamcrest import has_entry
+from hamcrest import has_items
 from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
+does_not = is_not
 
 from zope import interface
 from zope import lifecycleevent
@@ -319,6 +323,103 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
         assert_that(res.status_int, is_(200))
         app_iter = res.app_iter[0].split('\n')[:-1]
         assert_that(app_iter, has_length(4))
+
+    @WithSharedApplicationMockDS(users=True, testapp=True)
+    def test_profiles(self):
+        admin_username = 'test_profile_site_admin'
+        non_site_username = 'test_profile_nonsite_user'
+        other_username = 'test_profile_other_user'
+        username = 'test_profile_user'
+        with mock_dataserver.mock_db_trans(self.ds, site_name='alpha.nextthought.com'):
+            self._create_user(username=admin_username,
+                              external_value={'email': u"%s@nt.com" % admin_username,
+                                              'realname': u'admin johnson'})
+            mgr = IPrincipalRoleManager(getSite())
+            mgr.assignRoleToPrincipal(ROLE_SITE_ADMIN.id, admin_username)
+            self._create_user(username=other_username,
+                              external_value={'email': u"%s@nt.com" % other_username,
+                                              'realname': u'otheruser johnson'})
+            self._create_user(username=username,
+                              external_value={'email': u"%s@nt.com" % username,
+                                              'realname': u'reguser johnson'})
+            
+        with mock_dataserver.mock_db_trans(self.ds):
+            self._create_user(username=non_site_username,
+                              external_value={'email': u"%s@nt.com" % non_site_username,
+                                              'realname': u'othersite johnson'})
+            
+        admin_environ = self._make_extra_environ(username=admin_username)
+        nonsite_environ = self._make_extra_environ(username=non_site_username)
+        other_environ = self._make_extra_environ(username=other_username)
+        user_environ = self._make_extra_environ(username=username)
+        
+        for env in (admin_environ, nonsite_environ, other_environ, user_environ):
+            env['HTTP_ORIGIN'] = 'http://alpha.nextthought.com'
+        post_data = {
+            'alias': 'Ichigo',
+            'phones': {'home': '+81-90-1790-1357'},
+        }
+        resolve_href = '/dataserver2/ResolveUser/%s' % username
+        
+        resolve_res = self.testapp.get(resolve_href, extra_environ=user_environ)
+        resolve_res = resolve_res.json_body['Items'][0]
+        profile_rel = self.require_link_href_with_rel(resolve_res, 'profile')
+        profile_edit_rel = self.require_link_href_with_rel(resolve_res, 'profile_edit')
+        preflight_rel = self.require_link_href_with_rel(resolve_res, 'profile_preflight')
+        
+        resolve_res = self.testapp.get(resolve_href, extra_environ=admin_environ)
+        resolve_res = resolve_res.json_body['Items'][0]
+        self.require_link_href_with_rel(resolve_res, 'profile')
+        self.require_link_href_with_rel(resolve_res, 'profile_edit')
+        self.require_link_href_with_rel(resolve_res, 'profile_preflight')
+        
+        resolve_res = self.testapp.get(resolve_href, extra_environ=other_environ)
+        resolve_res = resolve_res.json_body['Items'][0]
+        self.require_link_href_with_rel(resolve_res, 'profile')
+        self.forbid_link_with_rel(resolve_res, 'profile_edit')
+        self.forbid_link_with_rel(resolve_res, 'profile_preflight')
+        
+        # Get
+        # birthdate not visible to admins
+        # email not visible to other users
+        res = self.testapp.get(profile_rel, extra_environ=user_environ)
+        assert_that(res.json_body, has_items('birthdate', 'email', 'about'))
+        res = self.testapp.get(profile_rel, extra_environ=admin_environ)
+        assert_that(res.json_body, has_items('email', 'about'))
+        assert_that(res.json_body, does_not(has_items('birthdate')))
+        res = self.testapp.get(profile_rel, extra_environ=other_environ)
+        assert_that(res.json_body, does_not(has_items('birthdate', 'email')))
+        self.testapp.get(profile_rel, extra_environ=nonsite_environ, status=403)
+        
+        # Edit
+        res = self.testapp.put_json(profile_edit_rel, post_data, status=200, 
+                                    extra_environ=user_environ)
+        assert_that(res.json_body, has_items('birthdate', 'email', 'about'))
+        assert_that(res.json_body, has_entries('phones', not_none(),
+                                               'alias', 'Ichigo'))
+        
+        post_data['alias'] = 'Savine'
+        res = self.testapp.put_json(profile_edit_rel, post_data, status=200, 
+                                    extra_environ=admin_environ)
+        assert_that(res.json_body, has_items('email', 'about'))
+        assert_that(res.json_body, does_not(has_items('birthdate')))
+        assert_that(res.json_body, has_entries('phones', not_none(),
+                                               'alias', 'Savine'))
+        
+        self.testapp.put_json(profile_edit_rel, post_data, status=403, 
+                              extra_environ=other_environ)
+        self.testapp.put_json(profile_edit_rel, post_data, status=403, 
+                              extra_environ=nonsite_environ)
+        
+        # Preflight
+        self.testapp.put_json(preflight_rel, post_data, status=200, 
+                              extra_environ=user_environ)
+        self.testapp.put_json(preflight_rel, post_data, status=200, 
+                              extra_environ=admin_environ)
+        self.testapp.put_json(preflight_rel, post_data, status=403, 
+                              extra_environ=other_environ)
+        self.testapp.put_json(preflight_rel, post_data, status=403, 
+                              extra_environ=nonsite_environ)
 
     @WithSharedApplicationMockDS(users=True, testapp=True)
     def test_update_profile(self):

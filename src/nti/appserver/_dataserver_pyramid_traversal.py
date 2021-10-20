@@ -9,7 +9,6 @@ code to work with the newer physical resource tree.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-__docformat__ = "restructuredtext en"
 
 import six
 import collections
@@ -484,10 +483,9 @@ class UserTraversable(_PseudoTraversableMixin):
 			pass
 
 		# Is there a named path adapter?
-		try:
-			return adapter_request(self.context, self.request).traverse(key, remaining_path)
-		except LocationError:
-			pass
+		result = path_adapter(self.context, self.request, key)
+		if result is not None:
+			return result
 
 		# Is this an item in the user's workspace?
 		# TODO: Implement workspace traversal. That and named path
@@ -553,6 +551,7 @@ class DFLTraversable(_PseudoTraversableMixin):
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
 
 from nti.traversal.traversal import adapter_request  # BWC export
+from nti.traversal.traversal import path_adapter
 
 class _resource_adapter_request(adapter_request):
 	"""

@@ -395,7 +395,6 @@ def _ext_type_resolver_for_user(remote_user):
         elif nauth.is_admin_or_site_admin(remote_user):
             ext_type = 'admin-summary'
         return ext_type
-
     return _get_ext_type
 
 
