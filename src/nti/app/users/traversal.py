@@ -73,9 +73,3 @@ class UserTokenContainerTraversable(object):
             return LocationProxy(token, self.context, name)
         else:
             raise LocationError(name)
-
-
-@interface.implementer(IPathAdapter)
-@component.adapter(IUser, IRequest)
-def _user_profile_path_adapter(user, unused_request=None):
-    return IUserProfile(user)

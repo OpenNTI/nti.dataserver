@@ -33,6 +33,7 @@ from pyramid.interfaces import IViewClassifier
 from pyramid.security import ALL_PERMISSIONS
 
 from pyramid.traversal import find_interface
+
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import httpexceptions as hexc
@@ -46,6 +47,7 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from Acquisition import aq_base
+
 from Acquisition.interfaces import IAcquirer
 
 from nti.dataserver import authorization_acl as nacl
@@ -60,6 +62,8 @@ from nti.dataserver.interfaces import InappropriateSiteError
 from nti.dataserver.interfaces import IHomogeneousTypeContainer
 from nti.dataserver.interfaces import ISimpleEnclosureContainer
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization import to_external_object
 
@@ -426,13 +430,16 @@ from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
-def _BlogResource(context, request):
+def _BlogResource(context, unused_request):
 	return IPersonalBlog(context, None)  # Does the user have access to a default forum/blog? If no, 403.
 
-def _CommunityBoardResource(context, request):
+def _UserProfileResource(context, unused_request):
+	return IUserProfile(context, None)
+
+def _CommunityBoardResource(context, unused_request):
 	return ICommunityBoard(context, None)
 
-def _DFLBoardResource(context, request):
+def _DFLBoardResource(context, unused_request):
 	return IDFLBoard(context, None)
 
 def _get_named_container_resource(name, context, request):
@@ -457,7 +464,8 @@ class UserTraversable(_PseudoTraversableMixin):
 						 PersonalBlog.__default_name__: _BlogResource,
 						 'DynamicMemberships': _DynamicMembershipsResource,
 						 'Groups': _DynamicFriendsListResource,
-						 'AllCommunities': _AllCommunitiesResource }
+						 'AllCommunities': _AllCommunitiesResource,
+						 'Profile': _UserProfileResource}
 	_pseudo_classes_.update(_PseudoTraversableMixin._pseudo_classes_)
 
 	_DENY_ALL = True
@@ -483,9 +491,10 @@ class UserTraversable(_PseudoTraversableMixin):
 			pass
 
 		# Is there a named path adapter?
-		result = path_adapter(self.context, self.request, key)
-		if result is not None:
-			return result
+		try:
+			return adapter_request(self.context, self.request).traverse(key, remaining_path)
+		except LocationError:
+			pass
 
 		# Is this an item in the user's workspace?
 		# TODO: Implement workspace traversal. That and named path

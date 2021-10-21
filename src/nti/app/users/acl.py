@@ -27,6 +27,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 
 logger = __import__('logging').getLogger(__name__)
 
+
 @interface.implementer(IACLProvider)
 @component.adapter(IUserProfile)
 class _UserProfileACLProvider(object):
@@ -40,7 +41,7 @@ class _UserProfileACLProvider(object):
 
     @property
     def __parent__(self):
-        return self.context.__parent__
+        return self._user
 
     @Lazy
     def __acl__(self):

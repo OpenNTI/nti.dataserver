@@ -159,11 +159,6 @@
 			 factory=".traversal._user_token_path_adapter"
 			 provides="zope.traversing.interfaces.IPathAdapter"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
-			 
-    <adapter name="profile"
-             factory=".traversal._user_profile_path_adapter"
-             provides="zope.traversing.interfaces.IPathAdapter"
-             for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
 
 	<adapter factory=".traversal.UserTokenContainerTraversable"
 			 provides="zope.traversing.interfaces.ITraversable"

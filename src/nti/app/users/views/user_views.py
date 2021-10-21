@@ -240,7 +240,7 @@ class UserUpdateView(UGDPutView):
         return True
 
     def validateInput(self, source):
-        logger.info('Updating profile (%s) (user=%s) (%s)',
+        logger.info('[AUDIT] Updating profile (%s) (user=%s) (%s)',
                     self.remoteUser.username,
                     self.context.username,
                     source)

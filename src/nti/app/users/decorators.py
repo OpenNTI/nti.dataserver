@@ -81,6 +81,9 @@ LINKS = StandardExternalFields.LINKS
 logger = __import__('logging').getLogger(__name__)
 
 
+USER_PROFILE_PATH = 'Profile'
+
+
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
 class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
@@ -155,10 +158,10 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
         
         # Admins and the user can view and edit the profile
         _links = result.setdefault(LINKS, [])
-        link = Link(context, elements=('profile',), 
+        link = Link(context, elements=(USER_PROFILE_PATH,), 
                     rel="profile_edit", method='PUT')
         _links.append(link)
-        link = Link(context, elements=('profile', 'preflight'), 
+        link = Link(context, elements=(USER_PROFILE_PATH, 'preflight'), 
                     rel="profile_preflight", method='PUT')
         _links.append(link)
         
@@ -195,7 +198,7 @@ class _UserProfileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
     def _do_decorate_external(self, context, result):
         _links = result.setdefault(LINKS, [])
-        link = Link(context, elements=('profile',), 
+        link = Link(context, elements=(USER_PROFILE_PATH,), 
                     rel="profile")
         _links.append(link)
         _links.append(link)
