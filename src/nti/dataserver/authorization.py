@@ -159,6 +159,8 @@ ACT_LIST = Permission('nti.actions.list')
 ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 
+ACT_MANAGE_PROFILE = Permission('nti.actions.manage_profile')
+
 #: admin
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias

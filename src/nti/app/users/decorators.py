@@ -32,6 +32,8 @@ from nti.app.users import MessageFactory as _
 
 from nti.app.users.utils import get_user_creation_sitename
 
+from nti.appserver.policies.interfaces import IRequireSetPassword
+
 from nti.appserver.pyramid_authorization import has_permission
 
 from nti.appserver.workspaces.interfaces import ICatalogWorkspaceLinkProvider
@@ -73,11 +75,13 @@ from nti.identifiers.utils import get_external_identifiers
 from nti.links.links import Link
 
 from nti.traversal.traversal import find_interface
-from nti.appserver.policies.interfaces import IRequireSetPassword
 
 LINKS = StandardExternalFields.LINKS
 
 logger = __import__('logging').getLogger(__name__)
+
+
+USER_PROFILE_PATH = 'Profile'
 
 
 @component.adapter(IUser)
@@ -151,8 +155,17 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
         result['lastSeenTime'] = context.lastSeenTime
         result['lastLoginTime'] = context.lastLoginTime
         result['CreationSite'] = get_user_creation_sitename(context)
+        
+        # Admins and the user can view and edit the profile
+        _links = result.setdefault(LINKS, [])
+        link = Link(context, elements=(USER_PROFILE_PATH,), 
+                    rel="profile_edit", method='PUT')
+        _links.append(link)
+        link = Link(context, elements=(USER_PROFILE_PATH, 'preflight'), 
+                    rel="profile_preflight", method='PUT')
+        _links.append(link)
+        
         if self.remoteUser != context:
-            _links = result.setdefault(LINKS, [])
             if IDeactivatedUser.providedBy(context):
                 link = Link(context, elements=('@@Restore',), rel="Restore")
             else:
@@ -164,6 +177,32 @@ class _UserAdminInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
             link = Link(context, elements=('@@' + REL_ADMIN_TRIGGERED_PASSCODE_RESET,), 
                         rel=REL_ADMIN_TRIGGERED_PASSCODE_RESET)
             _links.append(link)
+            
+            
+@component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
+class _UserProfileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+    def _predicate(self, user_context, unused_result):
+        if not self._is_authenticated:
+            return False
+        profile = IUserProfile(user_context)
+        result = has_permission(ACT_READ, profile, self.request)
+        if not result:
+            result = is_admin(self.remoteUser) or self.remoteUser == user_context
+        if not result and is_site_admin(self.remoteUser):
+            site_admin_utility = component.getUtility(ISiteAdminUtility)
+            result = site_admin_utility.can_administer_user(self.remoteUser,
+                                                            user_context)
+        return result
+
+    def _do_decorate_external(self, context, result):
+        _links = result.setdefault(LINKS, [])
+        link = Link(context, elements=(USER_PROFILE_PATH,), 
+                    rel="profile")
+        _links.append(link)
+        _links.append(link)
+            
 
 @component.adapter(ICommunity)
 @interface.implementer(IExternalMappingDecorator)

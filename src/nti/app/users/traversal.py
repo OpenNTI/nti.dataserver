@@ -23,10 +23,12 @@ from zope.traversing.interfaces import IPathAdapter
 from zope.traversing.interfaces import ITraversable
 
 from nti.dataserver.interfaces import UNAUTHENTICATED_PRINCIPAL_NAME
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import AnonymousUser
 
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IUserTokenContainer
 
 from nti.dataserver.users.tokens import UserTokenContainerFactory
