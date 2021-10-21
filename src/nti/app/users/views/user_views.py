@@ -47,14 +47,13 @@ from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.policies.interfaces import IRequireSetPassword
 
-from nti.appserver.pyramid_authorization import has_permission
-
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.coremetadata.interfaces import IDeactivatedEntity
 
 from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.authorization import ACT_UPDATE
+from nti.dataserver.authorization import ACT_MANAGE_PROFILE
 
 from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import is_admin_or_site_admin
@@ -308,9 +307,6 @@ class UserUpdateView(UGDPutView):
 
 class _UserProfileMixin(object):
     
-    #: The permission for this view
-    PERM = None
-    
     @Lazy
     def is_admin(self):
         return is_admin(self.remoteUser)
@@ -335,21 +331,11 @@ class _UserProfileMixin(object):
             result = 'admin-summary'
         return result
     
-    def _check_access(self, user):
-        # Need to manually check access since we do not have
-        # proper zope lineage here
-        if has_permission(self.PERM, self.context, self.request) or self.is_admin:
-            return
-        if      self.is_site_admin \
-            and self.site_admin_utility.can_administer_user(self.remoteUser,
-                                                            user):
-            return 
-        raise hexc.HTTPForbidden()
-
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IUserProfile,
+             permission=ACT_READ,
              request_method='GET')
 class UserProfileGetView(AbstractAuthenticatedView, _UserProfileMixin):
     """
@@ -358,11 +344,8 @@ class UserProfileGetView(AbstractAuthenticatedView, _UserProfileMixin):
     retrieves this info (currently)?
     """
     
-    PERM = ACT_READ
-    
     def __call__(self):
         user = IUser(self.context)
-        self._check_access(user)
         ext_type = self.get_externalizer(user)
         return to_external_object(user, name=ext_type)
     
@@ -477,26 +460,25 @@ class UserUpdatePreflightView(UserUpdateView):
              renderer='rest',
              context=IUserProfile,
              name='preflight',
+             permission=ACT_MANAGE_PROFILE,
              request_method='PUT')
 class UserProfileUpdatePreflightView(UserUpdatePreflightView, _UserProfileMixin):
     """
     A view to preflight profile updates, returning all validation errors if any.
     """
     
-    PERM = ACT_UPDATE
-    
     def _get_object_to_update(self):
         return IUser(self.context)
 
     def __call__(self):
         user = IUser(self.context)
-        self._check_access(user)
         return self._do_call(user)
 
 
 @view_config(route_name='objects.generic.traversal',
              renderer='rest',
              context=IUserProfile,
+             permission=ACT_MANAGE_PROFILE,
              request_method='PUT')
 class UserProfileUpdateView(UserUpdateView, _UserProfileMixin):
     """
@@ -506,14 +488,11 @@ class UserProfileUpdateView(UserUpdateView, _UserProfileMixin):
     `AdminUserUpdateView` becomes obsolete with this.
     """
     
-    PERM = ACT_UPDATE
-    
     def _get_object_to_update(self):
         return IUser(self.context)
     
     def __call__(self):
         user = IUser(self.context)
-        self._check_access(user)
         super(UserProfileUpdateView, self).__call__()
         ext_type = self.get_externalizer(user)
         return to_external_object(user, name=ext_type)

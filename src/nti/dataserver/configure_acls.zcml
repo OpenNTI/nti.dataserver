@@ -37,6 +37,9 @@
 		id="nti.actions.impersonate"
 		title="Impersonate another user" />
 	<permission
+        id="nti.actions.manage_profile"
+        title="Manage an entity profile" />
+	<permission
         id="nti.actions.contentedit"
         title="Allow content editing" />
     <permission
@@ -79,6 +82,9 @@
 		role="role:nti.admin"
 		permission="nti.actions.impersonate" />
 	<grant
+        role="role:nti.admin"
+        permission="nti.actions.manage_profile" />
+	<grant
 		role="role:nti.admin"
 		permission="nti.actions.manage.site" />
 
@@ -93,6 +99,8 @@
 	 -->
 	<grant	permission="nti.actions.impersonate"
 			role="role:nti.dataserver.site-admin"/>
+	<grant permission="nti.actions.manage_profile"
+            role="role:nti.dataserver.site-admin"/>
 
     <!-- Site admins have access to all -->
 	<grantAll role="role:nti.dataserver.site-admin" />

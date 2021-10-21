@@ -104,6 +104,11 @@
 				for="nti.dataserver.interfaces.IEntity
 					 pyramid.interfaces.IRequest"/>
 
+    <!-- Zope security -->
+    <adapter factory=".zope_security.UserProfilePrincipalPermissionMap"
+             provides="zope.securitypolicy.interfaces.IPrincipalPermissionMap"
+             for="nti.dataserver.users.interfaces.IUserProfile" />
+
 	<!-- Communities -->
     <adapter factory=".zope_security.PersistentCommunityPrincipalRoleManager"
              provides="nti.dataserver.interfaces.ICommunityPrincipalRoleManager"
