@@ -18,5 +18,5 @@ logger = __import__('logging').getLogger(__name__)
 @interface.implementer(ICommunityPolicyManagementUtility)
 class DefaultCommunityPolicyManagementUtility(object):
 
-    max_community_limit = 12
+    max_community_limit = 16
 
