@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import BTrees
+import itertools
 import unicodecsv as csv
 
 from datetime import datetime
@@ -58,6 +60,7 @@ from nti.base._compat import text_
 from nti.common.string import is_true
 from nti.common.string import is_false
 
+from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 from nti.coremetadata.interfaces import IX_TOPICS as CM_IX_TOPICS
 from nti.coremetadata.interfaces import IX_IS_DEACTIVATED
 
@@ -706,11 +709,20 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
         return result
 
     def get_sorted_entity_intids(self, doc_ids):
+        """
+        Returns an iterator of sorted entity intids.
+        """
         # pylint: disable=unsupported-membership-test,no-member
         if self.sortOn and self.sortOn in self.sortMap:
+            # Some indexes (e.g. alias) may not have all values. For now, we include
+            # objects with empty values at the end.
             catalog = self.sortMap.get(self.sortOn)
             reverse = self.sortOrder == 'descending'
-            doc_ids = catalog[self.sortOn].sort(doc_ids, reverse=reverse)
+            sort_idx = catalog[self.sortOn]
+            sort_idx_intids = BTrees.family64.IF.Set(sort_idx.ids())
+            non_sort_intids = catalog.family.IF.difference(doc_ids, sort_idx_intids)
+            doc_ids = sort_idx.sort(doc_ids, reverse=reverse)
+            doc_ids = itertools.chain(doc_ids, non_sort_intids)
         return doc_ids
 
     def search_prefix_match(self, compare, search_term):
@@ -837,6 +849,38 @@ class AbstractEntityViewMixin(AbstractAuthenticatedView,
             result[TOTAL] = result['TotalItemCount'] = len(self.filtered_intids)
         result[ITEM_COUNT] = len(result[ITEMS])
         return result
+    
+
+class AbstractUserViewMixin(AbstractEntityViewMixin):
+    """
+    An abstract view when getting lists of users.
+    """
+    
+    _ALLOWED_SORTING = AbstractEntityViewMixin._ALLOWED_SORTING + (IX_LASTSEEN_TIME,)
+
+    _NUMERIC_SORTING = AbstractEntityViewMixin._NUMERIC_SORTING + (IX_LASTSEEN_TIME,)
+    
+    def get_externalizer(self, user):
+        # pylint: disable=no-member
+        result = 'summary'
+        if user == self.remoteUser:
+            result = 'personal-summary'
+        elif self.is_admin:
+            result = 'admin-summary'
+        elif    self.is_site_admin \
+            and self.site_admin_utility.can_administer_user(self.remoteUser, user):
+            result = 'admin-summary'
+        return result
+
+    @Lazy
+    def sortMap(self):
+        return {
+            IX_ALIAS: get_entity_catalog(),
+            IX_REALNAME: get_entity_catalog(),
+            IX_DISPLAYNAME: get_entity_catalog(),
+            IX_CREATEDTIME: get_metadata_catalog(),
+            IX_LASTSEEN_TIME: get_metadata_catalog(),
+        }
     
 
 class UsersCSVExportMixin(object):

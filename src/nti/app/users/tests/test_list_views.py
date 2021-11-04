@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_item
+from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -38,6 +39,8 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
+from nti.dataserver.users import User
+
 from nti.externalization.interfaces import ObjectModifiedFromExternalEvent
 
 from nti.identifiers.interfaces import IUserExternalIdentityContainer
@@ -53,29 +56,25 @@ class TestListViews(ApplicationLayerTest):
         with mock_dataserver.mock_db_trans(self.ds):
             user = self._create_user(username=u'steve@nt.com',
                                      external_value={'email': u"steve@nt.com",
-                                                     'realname': u'steve johnson',
-                                                     'alias': u'citadel'})
+                                                     'realname': u'steve johnson'})
             set_user_creation_site(user, "nt.com")
             lifecycleevent.modified(user)
 
             user = self._create_user(username=u'rukia@bleach.com',
                                      external_value={'email': u'rukia@bleach.com',
-                                                     'realname': u'rukia kuchiki',
-                                                     'alias': u'sode no shirayuki'})
+                                                     'realname': u'rukia kuchiki'})
             set_user_creation_site(user, "bleach.org")
             lifecycleevent.modified(user)
 
             user = self._create_user(username=u'ichigo@bleach.com',
                                      external_value={'email': u'ichigo@bleach.com',
-                                                     'realname': u'ichigo kurosaki',
-                                                     'alias': u'zangetsu'})
+                                                     'realname': u'ichigo kurosaki'})
             set_user_creation_site(user, "bleach.org")
             lifecycleevent.modified(user)
 
             user = self._create_user(username=u'aizen@bleach.com',
                                      external_value={'email': u'newemail@gmail.com',
-                                                     'realname': u'aizen sosuke',
-                                                     'alias': u'kyoka suigetsu'})
+                                                     'realname': u'aizen sosuke'})
             set_user_creation_site(user, "bleach.org")
             lifecycleevent.modified(user)
             identity_container = IUserExternalIdentityContainer(user)
@@ -105,6 +104,29 @@ class TestListViews(ApplicationLayerTest):
         assert_that(res.json_body, has_entry('Total', is_(1)))
         assert_that(res.json_body, has_entry('Items', has_length(1)))
         assert_that(res.json_body['Items'][0], has_entry('email', 'newemail@gmail.com'))
+        
+        # Alias sorting - defaults to realname
+        def get_usernames(res):
+            result = [x.get('Username') for x in res.json_body['Items']]
+            return [x.lower() for x in result]
+        
+        params = {"site": 'bleach.org', 'sortOn': 'alias'}
+        res = self.testapp.get(url, params, status=200)
+        usernames = get_usernames(res)
+        assert_that(res.json_body, has_entry('Total', is_(3)))
+        assert_that(usernames, contains(u'aizen@bleach.com', u'ichigo@bleach.com', u'rukia@bleach.com'))
+        
+        # Remove alias
+        with mock_dataserver.mock_db_trans(self.ds):
+            user = User.get_user('ichigo@bleach.com')
+            fn = IFriendlyNamed(user)
+            fn.alias = None
+            lifecycleevent.modified(user)
+            
+        res = self.testapp.get(url, params, status=200)
+        usernames = get_usernames(res)
+        assert_that(res.json_body, has_entry('Total', is_(3)))
+        assert_that(usernames, contains(u'aizen@bleach.com', u'rukia@bleach.com', u'ichigo@bleach.com'))
         
         # CSV
         params = {"site": 'bleach.org', 'sortOn': 'createdTime'}

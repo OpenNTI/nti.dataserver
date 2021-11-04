@@ -43,26 +43,15 @@ from nti.app.users.utils import get_site_admins
 from nti.app.users.utils import intids_of_users_by_site
 
 from nti.app.users.views.view_mixins import UsersCSVExportMixin
-from nti.app.users.views.view_mixins import AbstractEntityViewMixin
+from nti.app.users.views.view_mixins import AbstractUserViewMixin
 
 from nti.common.string import is_true
-
-from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.authorization import is_admin_or_site_admin
 
 from nti.dataserver.interfaces import IUsersFolder
-
-from nti.dataserver.metadata.index import IX_CREATEDTIME
-from nti.dataserver.metadata.index import get_metadata_catalog
-
-from nti.dataserver.users.index import IX_ALIAS
-from nti.dataserver.users.index import IX_REALNAME
-from nti.dataserver.users.index import IX_DISPLAYNAME
-
-from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users import User
 
@@ -78,11 +67,7 @@ logger = __import__('logging').getLogger(__name__)
                context=IUsersFolder,
                accept='application/json',
                permission=nauth.ACT_READ)
-class SiteUsersView(AbstractEntityViewMixin):
-
-    _ALLOWED_SORTING = AbstractEntityViewMixin._ALLOWED_SORTING + (IX_LASTSEEN_TIME,)
-
-    _NUMERIC_SORTING = AbstractEntityViewMixin._NUMERIC_SORTING + (IX_LASTSEEN_TIME,)
+class SiteUsersView(AbstractUserViewMixin):
 
     def check_access(self):
         if not is_admin_or_site_admin(self.remoteUser):
@@ -108,28 +93,6 @@ class SiteUsersView(AbstractEntityViewMixin):
     def get_entity_intids(self, site=None):
         # The parent class will handle any deactivated entity filtering.
         return intids_of_users_by_site(site, filter_deactivated=False)
-
-    def get_externalizer(self, user):
-        # pylint: disable=no-member
-        result = 'summary'
-        if user == self.remoteUser:
-            result = 'personal-summary'
-        elif self.is_admin:
-            result = 'admin-summary'
-        elif    self.is_site_admin \
-            and self.site_admin_utility.can_administer_user(self.remoteUser, user):
-            result = 'admin-summary'
-        return result
-
-    @Lazy
-    def sortMap(self):
-        return {
-            IX_ALIAS: get_entity_catalog(),
-            IX_REALNAME: get_entity_catalog(),
-            IX_DISPLAYNAME: get_entity_catalog(),
-            IX_CREATEDTIME: get_metadata_catalog(),
-            IX_LASTSEEN_TIME: get_metadata_catalog(),
-        }
 
     def search_include(self, doc_id):
         # Users only and filter site admins if requested
