@@ -125,7 +125,7 @@ class AdminGetView(AdminAbstractView,
             yield doc_id
 
     def _do_call(self):
-        return AbstractEntityViewMixin._do_call(self)
+        return AbstractUserViewMixin._do_call(self)
 
 
 class AdminAbstractUpdateView(AdminAbstractView,  # pylint: disable=abstract-method
