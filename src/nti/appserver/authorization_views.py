@@ -35,11 +35,9 @@ from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.app.users.views.view_mixins import AbstractEntityViewMixin
+from nti.app.users.views.view_mixins import AbstractUserViewMixin
 
 from nti.appserver import MessageFactory as _
-
-from nti.coremetadata.interfaces import IX_LASTSEEN_TIME
 
 from nti.dataserver.authorization import is_admin
 from nti.dataserver.authorization import ROLE_ADMIN
@@ -47,14 +45,6 @@ from nti.dataserver.authorization import ROLE_ADMIN
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDataserver
-
-from nti.dataserver.metadata.index import IX_CREATEDTIME
-from nti.dataserver.metadata.index import get_metadata_catalog
-
-from nti.dataserver.users.index import IX_ALIAS
-from nti.dataserver.users.index import IX_REALNAME
-from nti.dataserver.users.index import IX_DISPLAYNAME
-from nti.dataserver.users.index import get_entity_catalog
 
 from nti.dataserver.users.users import User
 
@@ -123,29 +113,16 @@ class AdminAbstractView(AbstractAuthenticatedView):
              name=VIEW_ADMINS,
              request_method='GET')
 class AdminGetView(AdminAbstractView,
-                   AbstractEntityViewMixin):
+                   AbstractUserViewMixin):
     """
     Return all admins
     """
-
-    _ALLOWED_SORTING = AbstractEntityViewMixin._ALLOWED_SORTING + (IX_LASTSEEN_TIME,)
-    _NUMERIC_SORTING = AbstractEntityViewMixin._NUMERIC_SORTING + (IX_LASTSEEN_TIME,)
 
     def get_entity_intids(self, site=None):
         intids = component.getUtility(IIntIds)
         for user in self._get_admins():
             doc_id = intids.getId(user)
             yield doc_id
-
-    @Lazy
-    def sortMap(self):
-        return {
-            IX_ALIAS: get_entity_catalog(),
-            IX_REALNAME: get_entity_catalog(),
-            IX_DISPLAYNAME: get_entity_catalog(),
-            IX_CREATEDTIME: get_metadata_catalog(),
-            IX_LASTSEEN_TIME: get_metadata_catalog(),
-        }
 
     def _do_call(self):
         return AbstractEntityViewMixin._do_call(self)
