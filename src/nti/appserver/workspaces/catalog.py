@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+from pyramid import httpexceptions as hexc
+
 from requests.structures import CaseInsensitiveDict
 
 from zope import component
@@ -20,6 +22,8 @@ from zope.authentication.interfaces import IUnauthenticatedPrincipal
 from zope.cachedescriptors.property import Lazy
 
 from zope.container.contained import Contained
+
+from zope.security.management import getInteraction
 
 from zope.traversing.interfaces import IPathAdapter
 
@@ -103,9 +107,18 @@ class PurchasedCatalogCollection(Contained):
 @interface.implementer(IPathAdapter)
 @component.adapter(IDataserverFolder, IRequest)
 def DataserverCatalogPathAdapter(unused_context, request):
-    user = request.remote_user
-    if user is None:
-        user = component.queryUtility(IUnauthenticatedPrincipal)
+    principal = getInteraction().participations[0].principal
+    # participation may be a user principal, or some other
+    # principal like the anonymous principal
+    user = component.queryAdapter(principal, IUser, default=principal)
+    # we're a path adapter off IDataserverFolder expecting our principal
+    # to be anonymous here, but what should we do if that's an actual
+    # authenticated user hitting the anonymous href. It seems like that
+    # should 403 or 400, but we don't have a great way to do
+    # that in this context do we?
+    # TODO doing this here doesn't feel great
+    if not IUnauthenticatedPrincipal.providedBy(user):
+        raise hexc.HTTPForbidden()
     service = IService(user)
     workspace = ICatalogWorkspace(service)
     return workspace
