@@ -1,0 +1,46 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    i18n_domain="zope"
+    >
+
+  <include package="zope.component" file="meta.zcml" />
+  <include package="." file="meta.zcml" />
+  <include package="zope.security" file="meta.zcml" />
+
+  <include package="zope.security" />
+
+  <view
+      name="preferences"
+      for="*"
+      type="*"
+      provides="zope.traversing.interfaces.ITraversable"
+      factory=".traversal.NTIPreferencesNamespace"
+      />
+
+  <adapter
+      name="preferences"
+      for="*"
+      provides="zope.traversing.interfaces.ITraversable"
+      factory=".traversal.NTIPreferencesNamespace"
+      />
+
+  <!-- Default Preference Provider -->
+  <class class=".default.NTIDefaultPreferenceProvider">
+    <implements
+        interface="zope.annotation.interfaces.IAttributeAnnotatable"
+        />
+    <require
+        permission="zope.ManageSite"
+        interface="zope.preference.interfaces.IDefaultPreferenceProvider"
+        />
+  </class>
+
+  <view
+      name="preferences"
+      for="zope.preference.interfaces.IDefaultPreferenceProvider"
+      type="*"
+      provides="zope.interface.Interface"
+      factory="zope.preference.default.DefaultPreferences"
+      />
+
+</configure>
