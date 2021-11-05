@@ -1,0 +1,112 @@
+<configure  xmlns="http://namespaces.zope.org/zope"
+            xmlns:i18n="http://namespaces.zope.org/i18n"
+            xmlns:zcml="http://namespaces.zope.org/zcml"
+            xmlns:ext="http://nextthought.com/ntp/ext"
+	    xmlns:browser="http://namespaces.zope.org/browser">
+
+  <include package="zope.component" file="meta.zcml" />
+  <include package="zope.security" file="meta.zcml" />
+  <include package="zope.app.container.browser" file="meta.zcml" />
+  <include package="zope.browserpage" file="meta.zcml" />
+  <include package="zope.app.publication" file="meta.zcml" />
+  <include package="zope.app.form.browser" file="meta.zcml" />
+  <include package="zope.principalregistry" file="meta.zcml" />
+  <include package="zope.publisher" file="meta.zcml" />
+  <include package="zope.browserresource" file="meta.zcml" />
+  <include package="zope.browsermenu" file="meta.zcml" />
+  <include package="zope.securitypolicy" file="meta.zcml" />
+
+  <!-- These normally come from zope.app.zcmlfiles/menus.zcml -->
+  <browser:menu
+      id="zmi_views"
+      title="Views"
+      description="Menu for displaying alternate representations of an object"
+      />
+
+  <browser:menu
+      id="zmi_actions"
+      title="Actions"
+      description="Menu for displaying actions to be performed"
+      />
+
+  <browser:menu
+      id="zope.app.container.add"
+      title="Add"
+      description="Menu for objects to be added according to
+                   containment constraints"
+      interface="zope.app.publisher.interfaces.browser.AddMenu"
+      />
+
+  <browser:menu
+      id="add_component"
+      title="Add"
+      description="Menu of objects to be added to site management folders"
+      />
+
+  <browser:menu
+      id="add_registration"
+      title="Add Registration"
+      description="Menu of addable configuration objects"
+      />
+
+  <browser:addMenuItem
+      class="z3c.password.password.HighSecurityPasswordUtility"
+      permission="zope.ManageSite"
+      title="Password Policy"
+      />
+
+  <browser:addMenuItem
+      class="nti.app.products.courseware_scorm.client.PersistentSCORMCloudClient"
+      permission="zope.ManageSite"
+      title="ScormCloud Client"
+      />
+
+  <browser:editform
+      for="nti.app.products.courseware_scorm.interfaces.ISCORMCloudClient"
+      schema="nti.app.products.courseware_scorm.interfaces.ISCORMCloudClient"
+      name="edit.html"
+      label="Edit Scorm Cloud"
+      permission="zope.ManageSite"
+      menu="zmi_views"
+      title="Edit"/>
+
+  <browser:editform
+      for="z3c.password.interfaces.IHighSecurityPasswordUtility"
+      schema="z3c.password.interfaces.IHighSecurityPasswordUtility"
+      name="edit.html"
+      label="Edit Password Policy"
+      permission="zope.Public"
+      menu="zmi_views"
+      title="Edit"/>
+
+
+  <include package="zope.app.pagetemplate" />
+
+  <include package="zope.browsermenu" />
+  <include package="zope.app.exception.browser" />
+  <include package="zope.app.authentication.browser" file="grant.zcml"/>
+  <include package="zope.traversing.browser" />
+  <include package="zope.app.security.browser" />
+  <include package="zope.app.publisher.browser" />
+  <include package="zope.app.container.browser" />
+  <include package="zope.app.folder.browser" />
+  <include package="zope.app.form.browser" />
+  <include package="zope.app.securitypolicy.browser" />
+  <include package="zope.dublincore.browser" />
+
+  <include package="zope.app.component.browser" />
+
+  <include package="zope.app.rotterdam" />
+
+  <utility factory="zope.app.schema.vocabulary.ZopeVocabularyRegistry" />
+
+  <browser:defaultView name="index.html" />
+  <browser:defaultSkin name="Rotterdam" />
+
+  <!-- <include package="zope.app.exception.browser" /> -->
+  <include package="zope.traversing.browser" />
+
+  <!-- Folder creation views -->
+  <include package="zope.app.container.browser" />
+  <include package="zope.app.component.browser" />
+</configure>

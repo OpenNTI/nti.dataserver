@@ -348,6 +348,9 @@ setup(
         'zope.app.broken',     # Improved broken objects
         # simple dependency tracking; re-exported from zope.container
         'zope.app.dependable',
+        'zope.app.form',
+        'zope.app.rotterdam',
+        'zope.app.securitypolicy',
         # Info about the app. currently unused
         'zope.applicationcontrol',
         'zope.annotation',
