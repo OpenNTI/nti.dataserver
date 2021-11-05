@@ -81,11 +81,15 @@ from nti.schema.field import DecodingValidTextLine
 
 from nti.schema.interfaces import InvalidValue
 
+from nti.schema.jsonschema import TAG_APPLICATION_INFO
 from nti.schema.jsonschema import TAG_UI_TYPE
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI
 from nti.schema.jsonschema import TAG_READONLY_IN_UI
 from nti.schema.jsonschema import TAG_REQUIRED_IN_UI
 
+APPLICATION_INFO_PROFILE_GROUP_NAME = 'nti.dataserver.user_profile.group_name'
+APPLICATION_INFO_PROFILE_GROUP_TITLE = 'nti.dataserver.user_profile.group_title'
+APPLICATION_INFO_PROFILE_GROUP_ORDER = 'nti.dataserver.user_profile.group_order'
 
 class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
@@ -336,6 +340,12 @@ class OpenIDUserCreatedEvent(ObjectEvent):
         self.idurl = idurl
         self.content_roles = content_roles or ()
 
+def apply_group(field, gid, name=None, order=999):
+    app_settings = field.queryTaggedValue(TAG_APPLICATION_INFO, {})
+    app_settings[APPLICATION_INFO_PROFILE_GROUP_NAME] = gid
+    app_settings[APPLICATION_INFO_PROFILE_GROUP_TITLE] = name or _(gid)
+    app_settings[APPLICATION_INFO_PROFILE_GROUP_ORDER] = order
+    field.setTaggedValue(TAG_APPLICATION_INFO, app_settings)
 
 class IAvatarURLProvider(Interface):
     """
@@ -407,17 +417,20 @@ class IAvatarChoices(Interface):
         Returns a sequence of string choices.
         """
 
+_ABOUT_GROUP = (u'about', _('About'))
 
 class IFriendlyNamed(Interface):
 
     alias = TextLine(title=u'Display name',
                      description=u"Your display name",
                      required=False)
+    apply_group(alias, *_ABOUT_GROUP)
 
     realname = TextLine(title=u'Your name',
                         description=u"Your full name",
                         required=False,
                         constraint=checkRealname)
+    apply_group(realname, *_ABOUT_GROUP)
 
     def get_searchable_realname_parts():
         """
@@ -605,18 +618,22 @@ class ISocialMediaProfile(Interface):
     facebook = ValidURI(title=u'Facebook',
                         description=u'Facebook URL',
                         required=False)
+    apply_group(facebook, *_ABOUT_GROUP)
 
     twitter = ValidURI(title=u'Twitter',
                        description=u'Twitter URL',
                        required=False)
+    apply_group(twitter, *_ABOUT_GROUP)
 
     linkedIn = ValidURI(title=u'LinkedIn',
                         description=u'LinkedIn URL',
                         required=False)
+    apply_group(linkedIn, *_ABOUT_GROUP)
 
     instagram = ValidURI(title=u'Instagram',
                          description=u'Instagram URL',
                          required=False)
+    apply_group(instagram, *_ABOUT_GROUP)
 
 
 class IEducation(Interface):
@@ -656,6 +673,7 @@ class IEducationProfile(Interface):
                             title=u"Education entries",
                             required=False,
                             min_length=0)
+    apply_group(education, u'education', order=1999)
 
 
 class IProfessionalPosition(Interface):
@@ -696,6 +714,7 @@ class IProfessionalProfile(Interface):
                             title=u"professional position entries",
                             required=False,
                             min_length=0)
+    apply_group(positions, u'professional', order=2999)
 
 
 class IInterestProfile(Interface):
@@ -707,6 +726,7 @@ class IInterestProfile(Interface):
                             title=u"interest entries",
                             required=False,
                             min_length=0)
+    apply_group(interests, u'interests', order=3999)
 
 
 class IAboutProfile(Interface):
@@ -719,6 +739,7 @@ class IAboutProfile(Interface):
                     description=u"A simple overview",
                     required=False)
     about.__name__ = 'about'
+    apply_group(about, *_ABOUT_GROUP)
 
 
 class ICompleteUserProfile(IRestrictedUserProfile,
@@ -738,6 +759,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                           required=False,
                           constraint=checkEmailAddress)
     email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
+    apply_group(email, *_ABOUT_GROUP)
 
     opt_in_email_communication = Bool(title=u"Can we contact you by email?",
                                       required=False,
@@ -746,6 +768,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
     home_page = HTTPURL(title=u'Home page',
                         description=u"Your home page",
                         required=False)
+    apply_group(home_page, *_ABOUT_GROUP)
 
     description = ValidText(title=u'Biography',
                             description=u"A short overview of who you are and what you "
@@ -760,6 +783,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                              u"your office is located)",
                              required=False,
                              constraint=checkCannotBeBlank)
+    apply_group(location, *_ABOUT_GROUP)
 
     affiliation = ValidTextLine(title=u'Affiliation',
                                 description=u"Your affiliation, such as school name",
@@ -772,6 +796,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
                          max_length=140,
                          required=False,
                          constraint=checkCannotBeBlank)
+    apply_group(role, *_ABOUT_GROUP)
 
 
 class IProfileDisplayableSupplementalFields(interface.Interface):
