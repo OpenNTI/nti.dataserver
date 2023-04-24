@@ -111,12 +111,13 @@ setup(
         'Operating System :: OS Independent',
         'Framework :: Pylons :: ZODB :: Pyramid',
         "Development Status :: 4 - Beta",
+        'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: Implementation :: CPython',
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
-    url="https://github.com/NextThought/nti.dataserver",
+    url="https://github.com/OpenNTI/nti.dataserver",
     # Support unit tests of package
     tests_require=TESTS_REQUIRE,  # Needed for e.g., tox
     setup_requires=[
